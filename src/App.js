@@ -1,34 +1,51 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+import React, { useState } from 'react';
 import './styles.css'; // Import your global styles
-import ResourceList from './components/ResourceList'; // Import the ResourceList component
-import BidForm from './components/BidForm'; // Import the BidForm component
+import Header from './components/Header';
+import LandingPage from './components/LandingPage';
+import LoginModel from './components/LoginModel';
+import Client from './components/Client';
+import Footer from './components/Footer';
 
 // This is the main App component that will be rendered
+
+
+
+
 function App() {
-  return (
-    <div className="app-container">
-      {/* Header component */}
-      <header className="app-header">
-        <h1>Resource Exchange</h1>
-      </header>
+    const [enteredLogin, setEnteredLogin] = useState(false)
+    const [loggedIn , setLoggedIn] = useState(false);
 
-      {/* Main content area */}
-      <main className="app-main">
-        <ResourceList /> {/* Include the ResourceList component */}
-        <BidForm /> {/* Include the BidForm component */}
-      </main>
+    const enterLogin = () =>{
+        console.log("enterLogin");
+        setEnteredLogin(true);
+    }
 
-      {/* Footer component */}
-      <footer className="app-footer">
-        <p>&copy; 2023 Resource Exchange</p>
-      </footer>
-    </div>
-  );
+    const exitLogin = () =>{
+        console.log("exitLogin");
+        setEnteredLogin(false);
+    }
+
+    const successfulLogin = () =>{
+        console.log("successfulLogin");
+        setLoggedIn(true);
+    }
+
+    return (
+        <div className="app-container">
+            {/* Header component */}
+            <Header />
+
+            {/* Main content area */}
+            <main className="app-main">
+                {!loggedIn && <LandingPage enterLogin={enterLogin}/>}
+                {enteredLogin && <LoginModel successfulLogin={successfulLogin} exitLogin={exitLogin}/>}
+                {loggedIn && <Client />}
+            </main>
+
+            {/* Footer component */}
+            <Footer />
+        </div>
+    );
 }
-
-// Render the App component into the 'root' element in index.html
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
 
 export default App;
