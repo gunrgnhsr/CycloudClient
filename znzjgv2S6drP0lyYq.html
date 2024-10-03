@@ -1,0 +1,207 @@
+<html><head><base href="https://www.cycloud.com/" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cycloud - Share Computing Resources</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <h1>Cycloud</h1>
+        </nav>
+    </header>
+
+    <main>
+        <div id="landingPage">
+            <section class="hero container">
+                <img src="/a/9907d4d2-5cef-4df5-a7ad-a9a1f3cf006c" alt="Cycloud logo" class="logo" width="200" height="200">
+                <h2>Share Computing Resources with Ease</h2>
+                <p>Cycloud enables clients to rent and loan computing resources online, creating a collaborative ecosystem for efficient resource utilization.</p>
+                <button class="cta-button" onclick="showLoginModal()">Get Started</button>
+            </section>
+        </div>
+
+        <div id="dashboard" class="container">
+            <div class="tab">
+                <button class="tablinks active" onclick="openTab(event, 'Rent')">Rent</button>
+                <button class="tablinks" onclick="openTab(event, 'Loan')">Loan</button>
+            </div>
+
+            <div id="Rent" class="tabcontent" style="display: block;">
+                <h2>Available Computing Resources</h2>
+                <table id="rentTable">
+                    <tr>
+                        <th>CPU Cores</th>
+                        <th>Memory (GB)</th>
+                        <th>Storage (GB)</th>
+                        <th>GPU</th>
+                        <th>Bandwidth (Mbps)</th>
+                        <th>Cost per Hour ($)</th>
+                    </tr>
+                </table>
+                <button class="add-resource-btn" onclick="showAddResourceModal('rent')">+ Add Resource</button>
+            </div>
+
+            <div id="Loan" class="tabcontent">
+                <h2>Loan Requests</h2>
+                <table id="loanTable">
+                    <tr>
+                        <th>CPU Cores</th>
+                        <th>Memory (GB)</th>
+                        <th>Storage (GB)</th>
+                        <th>GPU</th>
+                        <th>Bandwidth (Mbps)</th>
+                        <th>Duration (Hours)</th>
+                    </tr>
+                </table>
+                <button class="add-resource-btn" onclick="showAddResourceModal('loan')">+ Add Loan Request</button>
+            </div>
+        </div>
+    </main>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeLoginModal()">&times;</span>
+            <h2>Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="submit-btn">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="addResourceModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeAddResourceModal()">&times;</span>
+            <h2 id="addResourceModalTitle">Add Resource</h2>
+            <form id="addResourceForm">
+                <div class="form-group">
+                    <label for="cpu_cores">CPU Cores:</label>
+                    <input type="number" id="cpu_cores" name="cpu_cores" required>
+                </div>
+                <div class="form-group">
+                    <label for="memory">Memory (GB):</label>
+                    <input type="number" id="memory" name="memory" required>
+                </div>
+                <div class="form-group">
+                    <label for="storage">Storage (GB):</label>
+                    <input type="number" id="storage" name="storage" required>
+                </div>
+                <div class="form-group">
+                    <label for="gpu">GPU:</label>
+                    <input type="text" id="gpu" name="gpu">
+                </div>
+                <div class="form-group">
+                    <label for="bandwidth">Bandwidth (Mbps):</label>
+                    <input type="number" id="bandwidth" name="bandwidth" required>
+                </div>
+                <div class="form-group" id="costPerHourGroup">
+                    <label for="cost_per_hour">Cost per Hour ($):</label>
+                    <input type="number" id="cost_per_hour" name="cost_per_hour" step="0.01" required>
+                </div>
+                <div class="form-group" id="durationGroup" style="display: none;">
+                    <label for="duration">Duration (Hours):</label>
+                    <input type="number" id="duration" name="duration" required>
+                </div>
+                <button type="submit" class="submit-btn">Add</button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Cycloud. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function showLoginModal() {
+            document.getElementById("loginModal").style.display = "block";
+        }
+
+        function closeLoginModal() {
+            document.getElementById("loginModal").style.display = "none";
+        }
+
+        document.getElementById("loginForm").onsubmit = function(e) {
+            e.preventDefault();
+            showDashboard();
+            closeLoginModal();
+        }
+
+        function showDashboard() {
+            document.getElementById("landingPage").style.display = "none";
+            document.getElementById("dashboard").style.display = "block";
+        }
+
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        function showAddResourceModal(type) {
+            document.getElementById("addResourceModal").style.display = "block";
+            if (type === 'rent') {
+                document.getElementById("addResourceModalTitle").innerText = "Add Resource";
+                document.getElementById("costPerHourGroup").style.display = "block";
+                document.getElementById("durationGroup").style.display = "none";
+            } else {
+                document.getElementById("addResourceModalTitle").innerText = "Add Loan Request";
+                document.getElementById("costPerHourGroup").style.display = "none";
+                document.getElementById("durationGroup").style.display = "block";
+            }
+        }
+
+        function closeAddResourceModal() {
+            document.getElementById("addResourceModal").style.display = "none";
+        }
+
+        document.getElementById("addResourceForm").onsubmit = function(e) {
+            e.preventDefault();
+            addResource();
+            closeAddResourceModal();
+        }
+
+        function addResource() {
+            var table = document.getElementById("rentTable");
+            if (document.getElementById("costPerHourGroup").style.display === "none") {
+                table = document.getElementById("loanTable");
+            }
+            var row = table.insertRow(-1);
+            var cell1 = row.insertCell(0);
+            var cell2 = row.insertCell(1);
+            var cell3 = row.insertCell(2);
+            var cell4 = row.insertCell(3);
+            var cell5 = row.insertCell(4);
+            var cell6 = row.insertCell(5);
+
+            cell1.innerHTML = document.getElementById("cpu_cores").value;
+            cell2.innerHTML = document.getElementById("memory").value;
+            cell3.innerHTML = document.getElementById("storage").value;
+            cell4.innerHTML = document.getElementById("gpu").value;
+            cell5.innerHTML = document.getElementById("bandwidth").value;
+            if (table.id === "rentTable") {
+                cell6.innerHTML = document.getElementById("cost_per_hour").value;
+            } else {
+                cell6.innerHTML = document.getElementById("duration").value;
+            }
+        }
+    </script>
+</body>
+</html>
