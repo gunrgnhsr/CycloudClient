@@ -5,7 +5,7 @@ function Header() {
     return (
       <header>
           <nav className="container">
-              <p>Cycloud</p>
+              <img src='./res/ReCyCloud_Logo.png' alt="Cycloud logo" className="logo" width="200" height="200"/>
           </nav>
       </header>
     );

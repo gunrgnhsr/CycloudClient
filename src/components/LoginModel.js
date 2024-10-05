@@ -6,23 +6,47 @@ function LoginModel({successfulLogin, exitLogin}) {
     const [password, setPassword] = useState("hardPass");
     
     
-    const submitLoginForm = (successfulLogin, exitLogin) => {
-        if (username === "hardUsername" && password === "hardPass") {
-            successfulLogin();
-        } else {
-            // Handle incorrect credentials (e.g., display an error message)
-            alert("Incorrect username or password");
-        }
+    const submitLoginForm = async (event) => {
+        event.preventDefault();
     
-        exitLogin();
-    };
+        try {
+          const response = await fetch('http://localhost:8080/login', { // Send POST request to /login
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              username: username,
+              password: password,
+            }),
+          });
+    
+          if (!response.ok) {
+            throw new Error('Login failed'); // Handle non-2xx responses
+          }
+    
+          const data = await response.json();
+          const token = data.token;
+    
+          // Store the token (e.g., in local storage)
+          localStorage.setItem('token', token);
+    
+          successfulLogin(); // Call the successfulLogin prop function
+        } catch (error) {
+          // Handle errors (e.g., display an error message)
+          console.error('Error during login:', error);
+          alert('Login failed. Please check your credentials.');
+        } finally {
+          exitLogin();
+        }
+      };
   
     return (
         <div id="loginModal" className="modal">
             <div className='modal-content'>
                 <span className="close-modal" onClick={exitLogin}>&times;</span>
                 <h2>Login</h2>
-                <form id="loginForm" onSubmit={()=>submitLoginForm(successfulLogin, exitLogin)}>
+                <form id="loginForm" onSubmit={submitLoginForm}>
                     <div className="form-group">
                         <label htmlFor="username">Username:</label>
                         <input 
