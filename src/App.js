@@ -9,7 +9,7 @@ import { useLoginState } from './components/clientLoginState';
 // This is the main App component that will be rendered
 function App() {
     // Get the login state
-    const isLoggeIn = useLoginState();
+    const {isLoggedIn} = useLoginState();
 
     // Add an event listener to handle the closure of the site abruptly
     window.addEventListener('beforeunload', () => {
@@ -23,7 +23,7 @@ function App() {
 
             {/* Main content area */}
             <main className="app-main">
-                {!(isLoggeIn) ? <LandingPage/> : <Client/>}
+                {!isLoggedIn ? <LandingPage/> : <Client/>}
             </main>
 
             {/* Footer component */}

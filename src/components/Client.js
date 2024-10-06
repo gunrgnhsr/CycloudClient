@@ -24,6 +24,7 @@ function Client() {
         case 'bandwidth': setBandwidth(value); break;
         case 'cost_per_hour': setCostPerHour(value); break;
         case 'duration': setDuration(value); break;
+        default: break;
         }
     };
 

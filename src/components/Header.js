@@ -1,8 +1,10 @@
 // src/components/Header.js
 import React from 'react';
-import LogoutModel from './LogoutModel';
+import { useLoginState } from './clientLoginState';
 
 function Header() {
+    const {LogoutModel} = useLoginState();
+
     return (
       <header>
           <nav className="container">

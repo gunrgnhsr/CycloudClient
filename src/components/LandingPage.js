@@ -1,9 +1,11 @@
 // src/components/LandingPage.js
 import React from 'react';
-import LoginModel from './LoginModel';
+import { useLoginState } from './clientLoginState';
 
 function LandingPage() {
     
+    const { LoginModel } = useLoginState();
+
     return (
         <div id="landingPage">
             <section className="landingPage">
