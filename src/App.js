@@ -1,45 +1,29 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './styles.css'; // Import your global styles
 import Header from './components/Header';
 import LandingPage from './components/LandingPage';
-import LoginModel from './components/LoginModel';
 import Client from './components/Client';
 import Footer from './components/Footer';
+import { useLoginState } from './components/clientLoginState';
 
 // This is the main App component that will be rendered
-
-
-
-
 function App() {
-    const [enteredLogin, setEnteredLogin] = useState(false)
-    const [loggedIn , setLoggedIn] = useState(false);
+    // Get the login state
+    const isLoggeIn = useLoginState();
 
-    const enterLogin = () =>{
-        console.log("enterLogin");
-        setEnteredLogin(true);
-    }
-
-    const exitLogin = () =>{
-        console.log("exitLogin");
-        setEnteredLogin(false);
-    }
-
-    const successfulLogin = () =>{
-        console.log("successfulLogin");
-        setLoggedIn(true);
-    }
+    // Add an event listener to handle the closure of the site abruptly
+    window.addEventListener('beforeunload', () => {
+        localStorage.removeItem('ReCyCloudtoken');
+    });
 
     return (
         <div className="app-container">
             {/* Header component */}
-            <Header />
+            <Header/>
 
             {/* Main content area */}
             <main className="app-main">
-                {!loggedIn && <LandingPage enterLogin={enterLogin}/>}
-                {enteredLogin && <LoginModel successfulLogin={successfulLogin} exitLogin={exitLogin}/>}
-                {loggedIn && <Client />}
+                {!(isLoggeIn) ? <LandingPage/> : <Client/>}
             </main>
 
             {/* Footer component */}
