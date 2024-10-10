@@ -1,5 +1,6 @@
 // src/components/Client.js
 import React, { useState } from 'react';
+import {useLoginState} from './LoginStateProvider';
     
 function Client() {
     const [resources, setResources] = useState([]);
@@ -13,6 +14,8 @@ function Client() {
     const [duration, setDuration] = useState('');
     const [isRentTab, setIsRentTab] = useState(true);
     const [showAddResourceModal, setShowAddResourceModal] = useState(false);
+
+    const { postAuthPost, postAuthPut, postAuthDel, postAuthGet } = useLoginState();
 
     const handleInputChange = (event) => {
         const { name, value } = event.target;
@@ -37,11 +40,13 @@ function Client() {
     };
 
   const addResource = () => {
+
     const newResource = { cpuCores, memory, storage, gpu, bandwidth, costPerHour, duration };
     if (isRentTab) {
-      setResources([...resources, newResource]);
+        
+        setResources([...resources, newResource]);
     } else {
-      setLoanRequests([...loanRequests, newResource]);
+        setLoanRequests([...loanRequests, newResource]);
     }
     // Clear the form fields
     setCpuCores('');

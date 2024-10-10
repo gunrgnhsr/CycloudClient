@@ -1,14 +1,17 @@
 // src/components/Header.js
 import React from 'react';
-import { useLoginState } from './LoginStateProvider';
+import {useLoginState} from './LoginStateProvider';
+import {useCommunication}  from './CommunicationStateProvider';
+
 
 function Header() {
     const {LogoutModel} = useLoginState();
+    const { CommunicationIndicator } = useCommunication();
 
     return (
       <header>
           <nav className="container">
-              <img src='./res/ReCyCloud_Logo.png' alt="Cycloud logo" className="logo" width="200" height="200"/>
+              <CommunicationIndicator />
               <LogoutModel/>
           </nav>
       </header>

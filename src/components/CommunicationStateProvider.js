@@ -1,9 +1,9 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
 const CommunicationContext = createContext();
 
-export const useCommunication = () => {
+const useCommunication = () => {
     return useContext(CommunicationContext);
 };
 
@@ -11,6 +11,27 @@ const CommunicationStateProvider = ({ children }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [serverUrl] = useState('http://localhost:8080/'); // Set your server URL here
+    const [loadingIterator, setLoadingIterator] = useState(0);
+
+    const CommunicationIndicator = () => {        
+        useEffect(() => {
+            if (!loading) {
+                return;
+            }
+            const interval = setInterval(() => {
+                setLoadingIterator((loadingIterator + 1) % 6);
+            }, 50);
+
+            return () => clearInterval(interval);
+        }, [loading]);
+
+        
+        return (
+            <>
+                {<img src={'./res/logos/ReCyCloud_Logo_'+(loadingIterator)+'.png'} alt="Cycloud logo" className="logo" width="180" height="180"/>}
+            </>
+        );
+    };
 
     const logDetails = (method, endpoint, data, response, config) => {
         console.log(`HTTP ${method.toUpperCase()} Request to ${serverUrl}${endpoint}`);
@@ -41,6 +62,7 @@ const CommunicationStateProvider = ({ children }) => {
         setLoading(true);
         try {
             const response = await axios.post(`${serverUrl}${endpoint}`, data, config);
+            await new Promise(resolve => setTimeout(resolve, 3000));/// to show the loading indicator
             setLoading(false);
             logDetails('post', endpoint, data, response, config);
             return response;
@@ -80,10 +102,10 @@ const CommunicationStateProvider = ({ children }) => {
     };
 
     return (
-        <CommunicationContext.Provider value={{ get, post, put, del, loading, error }}>
+        <CommunicationContext.Provider value={{CommunicationIndicator, get, post, put, del, loading, error }}>
             {children}
         </CommunicationContext.Provider>
     );
 };
 
-export default CommunicationStateProvider;
+export {CommunicationStateProvider, useCommunication};

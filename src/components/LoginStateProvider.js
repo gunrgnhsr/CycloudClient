@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useCommunication } from './CommunicationStateProvider';
+import {useCommunication}  from './CommunicationStateProvider';
 import CryptoJS from 'crypto-js';
 
 const LoginStateContext = createContext();
@@ -7,7 +7,47 @@ const LoginStateContext = createContext();
 const LoginStateProvider = ({ children }) => {
     const [ReCyCloudtoken, setReCyCloudtoken] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const { post, loading, error } = useCommunication();
+    const { get, post, put, del, loading, error } = useCommunication();
+
+    const postAuthPost = async (endpoint, data, config) => {
+        post(endpoint, data, {
+            ...config,
+            headers: {
+                ...config.headers,
+                'Authorization': `${ReCyCloudtoken}`
+            }
+        });
+    }
+
+    const postAuthPut = async (endpoint, data, config) => {
+        put(endpoint, data, {
+            ...config,
+            headers: {
+                ...config.headers,
+                'Authorization': `${ReCyCloudtoken}`
+            }
+        });
+    }
+
+    const postAuthDel = async (endpoint, config) => {
+        del(endpoint, {
+            ...config,
+            headers: {
+                ...config.headers,
+                'Authorization': `${ReCyCloudtoken}`
+            }
+        });
+    }
+
+    const postAuthGet = async (endpoint, config) => {
+        get(endpoint, {
+            ...config,
+            headers: {
+                ...config.headers,
+                'Authorization': `${ReCyCloudtoken}`
+            }
+        });
+    }
 
     const checkOrUpdateToken = (token, isUpdate) => {
         if (isUpdate) {
@@ -150,7 +190,7 @@ const LoginStateProvider = ({ children }) => {
     }
 
     return (
-        <LoginStateContext.Provider value={{ isLoggedIn, LoginModel , LogoutModel}}> 
+        <LoginStateContext.Provider value={{ isLoggedIn, LoginModel , LogoutModel, postAuthPost, postAuthPut, postAuthDel, postAuthGet }}> 
             {children}
         </LoginStateContext.Provider>
     );
@@ -160,7 +200,7 @@ const LoginStateProvider = ({ children }) => {
 const useLoginState = () => {
     const context = useContext(LoginStateContext);
     if (context === undefined) {
-        throw new Error('useLoginState must be used within a LoginStateProvider');   
+        throw new Error('useLoginState must be used within a LoginStateProvider');
     }
     return context;
 };
