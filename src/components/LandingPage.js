@@ -1,6 +1,6 @@
 // src/components/LandingPage.js
 import React from 'react';
-import { useLoginState } from './clientLoginState';
+import { useLoginState } from './LoginStateProvider';
 
 function LandingPage() {
     

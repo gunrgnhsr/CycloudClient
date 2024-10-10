@@ -55,6 +55,18 @@ function Client() {
     closeAddResourceModal();
   };
 
+  const removeResource = (index, isRequest) => {
+    if (isRequest) {
+      const updatedRequests = [...loanRequests];
+      updatedRequests.splice(index, 1);
+      setLoanRequests(updatedRequests);
+    } else {
+      const updatedResources = [...resources];
+      updatedResources.splice(index, 1);
+      setResources(updatedResources);
+    }
+  }
+
   return (
         <div className='container'>
             <div className="tab">
@@ -74,6 +86,7 @@ function Client() {
                             <th>GPU</th>
                             <th>Bandwidth (Mbps)</th>
                             <th>Cost per Hour ($)</th>
+                            <th/>
                         </tr>
                         </thead>
                         <tbody>
@@ -86,6 +99,7 @@ function Client() {
                                 <td>{resource.gpu}</td>
                                 <td>{resource.bandwidth}</td>
                                 <td>{resource.costPerHour}</td>
+                                <td><button className='cta-button' onClick={()=>{removeResource(index,false)}}>Remove</button></td>
                                 </tr>
                                 ))
                             )}
@@ -104,6 +118,7 @@ function Client() {
                             <th>GPU</th>
                             <th>Bandwidth (Mbps)</th>
                             <th>Duration (Hours)</th>
+                            <th/>
                         </tr>
                         </thead>
                         <tbody>
@@ -116,6 +131,7 @@ function Client() {
                                 <td>{resource.gpu}</td>
                                 <td>{resource.bandwidth}</td>
                                 <td>{resource.costPerHour}</td>
+                                <td><button className='cta-button' onClick={()=>{removeResource(index,true)}}>Remove</button></td>
                                 </tr>
                                 ))
                             )}
@@ -161,11 +177,11 @@ function Client() {
                                 <input type="number" id="duration" name="duration" value={duration} onChange={handleInputChange} required />
                             </div>
                             )}
-                            <button type="submit">Add</button>   
+                            <button type="submit">Add</button>
                         </form>
                     </div>
-            </div>
-            )};
+                </div>
+            )}
         </div>
     );
 }

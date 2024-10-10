@@ -4,7 +4,7 @@ import Header from './components/Header';
 import LandingPage from './components/LandingPage';
 import Client from './components/Client';
 import Footer from './components/Footer';
-import { useLoginState } from './components/clientLoginState';
+import { useLoginState } from './components/LoginStateProvider';
 
 // This is the main App component that will be rendered
 function App() {

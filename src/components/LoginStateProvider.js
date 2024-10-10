@@ -1,12 +1,15 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useCommunication } from './CommunicationStateProvider';
+import CryptoJS from 'crypto-js';
 
 const LoginStateContext = createContext();
 
 const LoginStateProvider = ({ children }) => {
     const [ReCyCloudtoken, setReCyCloudtoken] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const { post, loading, error } = useCommunication();
 
-    const checkOrUpdateTokeb = (token, isUpdate) => {
+    const checkOrUpdateToken = (token, isUpdate) => {
         if (isUpdate) {
             setReCyCloudtoken(token);
             setIsLoggedIn(token !== null);
@@ -23,7 +26,7 @@ const LoginStateProvider = ({ children }) => {
     }
 
     useEffect(() => {
-        const intervalId = setInterval(()=>{checkOrUpdateTokeb(ReCyCloudtoken,false)}, 1000); // Check every second
+        const intervalId = setInterval(()=>{checkOrUpdateToken(ReCyCloudtoken,false)}, 1000); // Check every second
 
         return () => clearInterval(intervalId); // Cleanup on unmount
     });
@@ -31,16 +34,14 @@ const LoginStateProvider = ({ children }) => {
     const LogoutModel = () => {
         const handleLogout = async () => {
             try {
-                const response = await fetch('http://localhost:8080/logout', {
-                    method: 'POST',
-                    // credentials: 'include',
+                const response = await post('logout',null ,{
                     headers: {
                         'Authorization': `${ReCyCloudtoken}`
                     }
                 });
     
-                if (response.ok) {
-                    checkOrUpdateTokeb(null,true);
+                if (response.status === 200) {
+                    checkOrUpdateToken(null,true);
                     console.log('Logout successful');
                 } else {
                     console.error('Logout failed');
@@ -64,33 +65,48 @@ const LoginStateProvider = ({ children }) => {
             event.preventDefault();
         
             try {
-              const response = await fetch('http://localhost:8080/login', { // Send POST request to /login
-                method: 'POST',
-                headers: {
-                  'Authorization': 'application/json',
-                },
-                body: JSON.stringify({
-                  username: username,
-                  password: password,
-                }),
-              });
-        
-              if (!response.ok) {
-                throw new Error('Login failed'); // Handle non-2xx responses
-              }
-        
-              const data = await response.json();
-              const token = data.token;
-        
-              // Store the token (e.g., in local storage)
-              console.log('successfully logged in:', token);
-              checkOrUpdateTokeb(token,true);
+                const hash = (input) => {
+                    return CryptoJS.SHA256(input).toString(CryptoJS.enc.Hex);
+                };
+
+                const hashedUsername = hash(username);
+                const hashedPassword = hash(password);
+                // Clear the form fields
+                setUsername('');
+                setPassword('');
+                const response = await post('login', 
+                    {
+                        username: hashedUsername,
+                        password: hashedPassword,
+                    },
+                    {
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+
+                
+
+                if (!response.status === 200) {
+                    if(response.status === 201){
+                        console.log('new user created');
+                    }else{
+                        throw new Error('Login failed');
+                    }
+                }
+
+                const token = response.data.token;
+            
+                // Store the token (e.g., in local storage)
+                console.log('successfully logged in:', token);
+                checkOrUpdateToken(token,true);
             } catch (error) {
-              // Handle errors (e.g., display an error message)
-              console.error('Error during login:', error);
-              alert('Login failed. Please check your credentials.');
+                // Handle errors (e.g., display an error message)
+                console.error('Error during login:', error);
+                alert('Login failed. Please check your credentials.');
             } finally {
-              setShowLoginModel(false);
+                setShowLoginModel(false);
             }
         };
     
