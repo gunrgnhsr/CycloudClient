@@ -9,44 +9,30 @@ const LoginStateProvider = ({ children }) => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const { get, post, put, del, loading, error } = useCommunication();
 
-    const postAuthPost = async (endpoint, data, config) => {
-        post(endpoint, data, {
+    const postAuthConfig =(config) => {
+        return {
             ...config,
             headers: {
                 ...config.headers,
                 'Authorization': `${ReCyCloudtoken}`
             }
-        });
+        }
+    }
+
+    const postAuthPost = async (endpoint, data, config) => {
+        return await post(endpoint, data, postAuthConfig(config));
     }
 
     const postAuthPut = async (endpoint, data, config) => {
-        put(endpoint, data, {
-            ...config,
-            headers: {
-                ...config.headers,
-                'Authorization': `${ReCyCloudtoken}`
-            }
-        });
+        return await put(endpoint, data, postAuthConfig(config));
     }
 
     const postAuthDel = async (endpoint, config) => {
-        del(endpoint, {
-            ...config,
-            headers: {
-                ...config.headers,
-                'Authorization': `${ReCyCloudtoken}`
-            }
-        });
+        return await del(endpoint, postAuthConfig(config));
     }
 
     const postAuthGet = async (endpoint, config) => {
-        get(endpoint, {
-            ...config,
-            headers: {
-                ...config.headers,
-                'Authorization': `${ReCyCloudtoken}`
-            }
-        });
+        return await get(endpoint, postAuthConfig(config));
     }
 
     const checkOrUpdateToken = (token, isUpdate) => {
@@ -73,22 +59,18 @@ const LoginStateProvider = ({ children }) => {
 
     const LogoutModel = () => {
         const handleLogout = async () => {
-            try {
-                const response = await post('logout',null ,{
-                    headers: {
-                        'Authorization': `${ReCyCloudtoken}`
+            await postAuthDel('logout' ,{})
+                .then(response => {
+                    if (response.status === 200) {
+                        checkOrUpdateToken(null,true);
+                        console.log('Logout successful');
+                    } else {
+                        console.error('Logout failed');
                     }
+                })
+                .catch(error => {
+                    console.error('Error during logout:', error);
                 });
-    
-                if (response.status === 200) {
-                    checkOrUpdateToken(null,true);
-                    console.log('Logout successful');
-                } else {
-                    console.error('Logout failed');
-                }
-            } catch (error) {
-                console.error('Error during logout:', error);
-            }
         };
     
         return (
@@ -102,52 +84,34 @@ const LoginStateProvider = ({ children }) => {
         const [enterLoginForm, setShowLoginModel] = useState(false);
     
         const submitLoginForm = async (event) => {
-            event.preventDefault();
-        
-            try {
-                const hash = (input) => {
-                    return CryptoJS.SHA256(input).toString(CryptoJS.enc.Hex);
-                };
-
-                const hashedUsername = hash(username);
-                const hashedPassword = hash(password);
-                // Clear the form fields
-                setUsername('');
-                setPassword('');
-                const response = await post('login', 
-                    {
-                        username: hashedUsername,
-                        password: hashedPassword,
-                    },
-                    {
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                    }
-                );
-
-                
-
-                if (!response.status === 200) {
-                    if(response.status === 201){
-                        console.log('new user created');
-                    }else{
-                        throw new Error('Login failed');
-                    }
-                }
-
-                const token = response.data.token;
-            
-                // Store the token (e.g., in local storage)
-                console.log('successfully logged in:', token);
-                checkOrUpdateToken(token,true);
-            } catch (error) {
-                // Handle errors (e.g., display an error message)
-                console.error('Error during login:', error);
-                alert('Login failed. Please check your credentials.');
-            } finally {
-                setShowLoginModel(false);
+            event.preventDefault();    
+            const hash = (input) => {
+                return CryptoJS.SHA256(input).toString(CryptoJS.enc.Hex);
+            };
+            const user = {
+                username: hash(username),
+                password: hash(password),
             }
+            // Clear the form fields
+            setUsername('');
+            setPassword('');
+            await post('login', user, {})
+                .then(response => {
+                    if (!response.status === 200) {
+                        if(response.status === 201){
+                            console.log('new user created');
+                        }else{
+                            throw new Error('Login failed');
+                        }
+                    }
+                    const token = response.data.token;
+                    console.log('successfully logged in:', token);
+                    checkOrUpdateToken(token,true);
+                })
+                .catch(error => {
+                    console.error('Error during login:', error);
+                    alert('Login failed. Please check your credentials.');
+                }).finally(() => {setShowLoginModel(false)});      
         };
     
     

@@ -3,30 +3,45 @@ import React, { useState } from 'react';
 import {useLoginState} from './LoginStateProvider';
     
 function Client() {
-    const [resources, setResources] = useState([]);
     const [loanRequests, setLoanRequests] = useState([]);
-    const [cpuCores, setCpuCores] = useState('');
-    const [memory, setMemory] = useState('');
-    const [storage, setStorage] = useState('');
-    const [gpu, setGpu] = useState('');
-    const [bandwidth, setBandwidth] = useState('');
-    const [costPerHour, setCostPerHour] = useState('');
-    const [duration, setDuration] = useState('');
+    const [cpuCores, setCpuCores] = useState(2);
+    const [memory, setMemory] = useState(2);
+    const [storage, setStorage] = useState(10);
+    const [gpu, setGpu] = useState('RTX 3090');
+    const [bandwidth, setBandwidth] = useState(1000);
+    const [costPerHour, setCostPerHour] = useState(2);
+    const [duration, setDuration] = useState(1);
     const [isRentTab, setIsRentTab] = useState(true);
     const [showAddResourceModal, setShowAddResourceModal] = useState(false);
-
     const { postAuthPost, postAuthPut, postAuthDel, postAuthGet } = useLoginState();
+
+    const getResouces = async () => {
+        await postAuthGet(`get-user-resources`, {})
+            .then(response => {
+                if (response.status === 200) {
+                    setResources(response.data);
+                    console.log('Got user Resources:', response.data);
+                } else {
+                    console.error('Failed to add resource:', response.statusText);
+                }
+            })
+            .catch(error => {
+                console.error('Error getting resource:', error);
+            });
+    }
+
+    const [resources, setResources] = useState(getResouces);
 
     const handleInputChange = (event) => {
         const { name, value } = event.target;
         switch (name) {
-        case 'cpu_cores': setCpuCores(value); break;
-        case 'memory': setMemory(value); break;
-        case 'storage': setStorage(value); break;
+        case 'cpu_cores': setCpuCores(parseInt(value, 10)); break;
+        case 'memory': setMemory(parseInt(value, 10)); break;
+        case 'storage': setStorage(parseInt(value, 10)); break;
         case 'gpu': setGpu(value); break;
-        case 'bandwidth': setBandwidth(value); break;
-        case 'cost_per_hour': setCostPerHour(value); break;
-        case 'duration': setDuration(value); break;
+        case 'bandwidth': setBandwidth(parseInt(value, 10)); break;
+        case 'cost_per_hour': setCostPerHour(parseFloat(value)); break;
+        case 'duration': setDuration(parseInt(value, 10)); break;
         default: break;
         }
     };
@@ -39,37 +54,73 @@ function Client() {
         setShowAddResourceModal(false);
     };
 
-  const addResource = () => {
-
-    const newResource = { cpuCores, memory, storage, gpu, bandwidth, costPerHour, duration };
+  const addResource = async () => {
+    const newResource = { 
+        cpuCores: cpuCores, 
+        memory: memory, 
+        storage: storage, 
+        gpu: gpu, 
+        bandwidth: bandwidth, 
+        costPerHour: costPerHour, 
+        duration: duration 
+    };
     if (isRentTab) {
-        
-        setResources([...resources, newResource]);
+        await postAuthPost('add-user-resources', newResource, {})
+            .then(response => {
+                if (response.status === 201) {
+                    getResouces();
+                    console.log('Resource added:', response.data);
+                } else {
+                    console.error('Failed to add resource:', response.statusText);
+                }
+            })
+            .catch(error => {
+                console.error('Error adding resource:', error);
+            });
     } else {
         setLoanRequests([...loanRequests, newResource]);
     }
     // Clear the form fields
-    setCpuCores('');
-    setMemory('');
-    setStorage('');
-    setGpu('');
-    setBandwidth('');
-    setCostPerHour('');
-    setDuration('');
+    // setCpuCores('');
+    // setMemory('');
+    // setStorage('');
+    // setGpu('');
+    // setBandwidth('');
+    // setCostPerHour('');
+    // setDuration('');
 
     closeAddResourceModal();
   };
 
-  const removeResource = (index, isRequest) => {
-    if (isRequest) {
-      const updatedRequests = [...loanRequests];
-      updatedRequests.splice(index, 1);
-      setLoanRequests(updatedRequests);
-    } else {
-      const updatedResources = [...resources];
-      updatedResources.splice(index, 1);
-      setResources(updatedResources);
+    const removeUserResource = async (rid) => {
+        await postAuthDel(`delete-user-resource/${rid}`, {})
+            .then(response => {
+                if (response.status === 200) {
+                    getResouces();
+                    console.log('Resource deleted:', response.data);
+                } else {
+                    console.error('Failed to delete resource:', response.statusText);
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting resource:', error);
+            });
     }
+
+
+  const changeAvailability = async (rid, available) => {
+    await postAuthPut(`update-resource-availability/${rid}`, { available: available }, {})
+        .then(response => {
+            if (response.status === 200) {
+                getResouces();
+                console.log('Resource availability updated:', response.data);
+            } else {
+                console.error('Failed to update resource:', response.statusText);
+            }
+        })
+        .catch(error => {
+            console.error('Error updating resource:', error);
+        });
   }
 
   return (
@@ -84,15 +135,16 @@ function Client() {
                     <h2>Available Computing Resources</h2>
                     <table>
                         <thead>
-                        <tr>
-                            <th>CPU Cores</th>
-                            <th>Memory (GB)</th>
-                            <th>Storage (GB)</th>
-                            <th>GPU</th>
-                            <th>Bandwidth (Mbps)</th>
-                            <th>Cost per Hour ($)</th>
-                            <th/>
-                        </tr>
+                            <tr>
+                                <th>CPU Cores</th>
+                                <th>Memory (GB)</th>
+                                <th>Storage (GB)</th>
+                                <th>GPU</th>
+                                <th>Bandwidth (Mbps)</th>
+                                <th>Cost per Hour ($)</th>
+                                <th>Available</th>
+                                <th/>
+                            </tr>
                         </thead>
                         <tbody>
                             {resources.length > 0 && (
@@ -104,7 +156,8 @@ function Client() {
                                 <td>{resource.gpu}</td>
                                 <td>{resource.bandwidth}</td>
                                 <td>{resource.costPerHour}</td>
-                                <td><button className='cta-button' onClick={()=>{removeResource(index,false)}}>Remove</button></td>
+                                <td><button className='cta-button' style={{ backgroundColor: resource.available ? 'green' : 'red' }}  onClick={()=>{changeAvailability(resource.rid,resource.available)}}>available</button></td>
+                                <td><button className='cta-button' onClick={()=>{removeUserResource(resource.rid)}}>Remove</button></td>
                                 </tr>
                                 ))
                             )}
@@ -136,7 +189,7 @@ function Client() {
                                 <td>{resource.gpu}</td>
                                 <td>{resource.bandwidth}</td>
                                 <td>{resource.costPerHour}</td>
-                                <td><button className='cta-button' onClick={()=>{removeResource(index,true)}}>Remove</button></td>
+                                {/* <td><button className='cta-button' onClick={()=>{removeResource(index,true)}}>Remove</button></td> */}
                                 </tr>
                                 ))
                             )}

@@ -33,7 +33,7 @@ const CommunicationStateProvider = ({ children }) => {
         );
     };
 
-    const logDetails = (method, endpoint, data, response, config) => {
+    const logRequestDetails = (method, endpoint, data, config) => {
         console.log(`HTTP ${method.toUpperCase()} Request to ${serverUrl}${endpoint}`);
         if (data) {
             console.log('Request Data:', data);
@@ -41,15 +41,21 @@ const CommunicationStateProvider = ({ children }) => {
         if (config) {
             console.log('Request Config:', config);
         }
-        console.log('Response:', response);
     };
+
+    const logResponseDetails = (method, endpoint, response) => {
+        console.log(`HTTP ${method.toUpperCase()} Response from ${serverUrl}${endpoint}`);
+        console.log('Response:', response);
+    }
+
 
     const get = async (endpoint, config) => {
         setLoading(true);
         try {
+            logRequestDetails('get', endpoint, null, config);
             const response = await axios.get(`${serverUrl}${endpoint}`, config);
             setLoading(false);
-            logDetails('get', endpoint, null, response, config);
+            logResponseDetails('get', endpoint, response);
             return response;
         } catch (err) {
             setLoading(false);
@@ -58,13 +64,27 @@ const CommunicationStateProvider = ({ children }) => {
         }
     };
 
+    const addContentType = (config) => {
+        if (!config) {
+            return { headers: { 'Content-Type': 'application/json' } };
+        }
+        if (!config.headers) {
+            return { ...config, headers: { 'Content-Type': 'application/json' } };
+        }
+        if (!config.headers['Content-Type']) {
+            return { ...config, headers: { ...config.headers, 'Content-Type': 'application/json' } };
+        }
+        return config;
+    };
+
     const post = async (endpoint, data, config) => {
         setLoading(true);
         try {
-            const response = await axios.post(`${serverUrl}${endpoint}`, data, config);
-            await new Promise(resolve => setTimeout(resolve, 3000));/// to show the loading indicator
+            logRequestDetails('post', endpoint, data, config);
+            const response = await axios.post(`${serverUrl}${endpoint}`, data, addContentType(config));
+            await new Promise(resolve => setTimeout(resolve, 1000));/// to show the loading indicator
             setLoading(false);
-            logDetails('post', endpoint, data, response, config);
+            logResponseDetails('post', endpoint, response);
             return response;
         } catch (err) {
             setLoading(false);
@@ -76,9 +96,10 @@ const CommunicationStateProvider = ({ children }) => {
     const put = async (endpoint, data, config) => {
         setLoading(true);
         try {
+            logRequestDetails('put', endpoint, data, config);
             const response = await axios.put(`${serverUrl}${endpoint}`, data, config);
             setLoading(false);
-            logDetails('put', endpoint, data, response, config);
+            logResponseDetails('put', endpoint, response);
             return response;
         } catch (err) {
             setLoading(false);
@@ -90,9 +111,10 @@ const CommunicationStateProvider = ({ children }) => {
     const del = async (endpoint, config) => {
         setLoading(true);
         try {
+            logRequestDetails('delete', endpoint, null, config);
             const response = await axios.delete(`${serverUrl}${endpoint}`, config);
             setLoading(false);
-            logDetails('delete', endpoint, null, response, config);
+            logResponseDetails('delete', endpoint, response);
             return response;
         } catch (err) {
             setLoading(false);
