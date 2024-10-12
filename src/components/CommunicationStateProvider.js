@@ -82,7 +82,6 @@ const CommunicationStateProvider = ({ children }) => {
         try {
             logRequestDetails('post', endpoint, data, config);
             const response = await axios.post(`${serverUrl}${endpoint}`, data, addContentType(config));
-            await new Promise(resolve => setTimeout(resolve, 1000));/// to show the loading indicator
             setLoading(false);
             logResponseDetails('post', endpoint, response);
             return response;
