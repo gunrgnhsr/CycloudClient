@@ -6,6 +6,7 @@ function AddLoanRequest({tab}) {
     
     // Loan request state
     const [loanRequestRid, setLoanRequestRid] = useState(0);
+    const [loanResourceCostPerMinute, setLoanResourceCostPerMinute] = useState(0);
     const [amount, setAmount] = useState(1);
     const [duration, setDuration] = useState(1);
 
@@ -51,11 +52,14 @@ function AddLoanRequest({tab}) {
         }
     };
 
-    const handleLoanRequestClick = (rid) => {
+    const handleLoanRequestClick = (rid, costPerMinute) => {
         setLoanRequestRid(rid);
+        setLoanResourceCostPerMinute(costPerMinute);
+        setAmount(costPerMinute);
         setShowAddLoanModal(true);
     };
 
+    const [sufficientFunds, setSufficientFunds] = useState(true);
     const addLoan = async () => {
         const newLoanRequest = {
             rid: loanRequestRid,
@@ -71,8 +75,17 @@ function AddLoanRequest({tab}) {
                 else {
                     console.error('Failed to add loan request:', response.statusText);
                 }
-            })
-        setShowAddLoanModal(false);
+            }).catch(error => {
+                if (error.status === 402) {
+                    alert(error.response.data);
+                    setSufficientFunds(false);
+                }
+                console.error('Error adding loan request:', error);
+            });
+        if (sufficientFunds) {
+            setShowAddLoanModal(false);
+        }
+        setSufficientFunds(true);
     };
 
   return (
@@ -87,7 +100,7 @@ function AddLoanRequest({tab}) {
                     <th>Storage (GB)</th>
                     <th>GPU</th>
                     <th>Bandwidth (Mbps)</th>
-                    <th>Cost per Hour ($)</th>
+                    <th>Cost per Minute ($)</th>
                     <th/>
                 </tr>
                 </thead>
@@ -101,7 +114,7 @@ function AddLoanRequest({tab}) {
                         <td>{resource.gpu}</td>
                         <td>{resource.bandwidth}</td>
                         <td>{resource.costPerHour}</td>
-                        <td><button className='cta-button' onClick={()=>{handleLoanRequestClick(resource.rid)}}>loan</button></td>
+                        <td><button className='cta-button' onClick={()=>{handleLoanRequestClick(resource.rid, resource.costPerHour)}}>loan</button></td>
                         </tr>
                         ))
                     )}
@@ -116,11 +129,11 @@ function AddLoanRequest({tab}) {
                     <form onSubmit={(e) => { e.preventDefault(); addLoan(); }}> {/* Form submission handler */}
                         <div>
                             <label htmlFor="amount">Amount ($):</label>
-                            <input type="number" id="amount" name="amount" value={amount} onChange={handleLoanInputChange} required />
+                            <input type="number" id="amount" name="amount" value={amount} onChange={handleLoanInputChange} step="0.01" min={loanResourceCostPerMinute}  required />
                         </div>
                         <div>
-                            <label htmlFor="duration">duration (Hours):</label>
-                            <input type="number" id="duration" name="duration" value={duration} onChange={handleLoanInputChange} required />
+                            <label htmlFor="duration">duration (Minutes):</label>
+                            <input type="number" id="duration" name="duration" value={duration} onChange={handleLoanInputChange} step="1" min="1" required />
                         </div>
                         <button type="submit">Add</button>
                     </form>

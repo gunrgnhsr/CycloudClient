@@ -116,7 +116,7 @@ function AddResource({tab}) {
   return (
         <>  
         <div>
-            <button className="add-resource-btn" onClick={handleAddResourceClick}>Request</button>
+            <button className="add-resource-btn" onClick={handleAddResourceClick}>Add Resource</button>
             <h2>My Computing Resources For Rent</h2>
             <table>
                 <thead>
@@ -126,7 +126,7 @@ function AddResource({tab}) {
                         <th>Storage (GB)</th>
                         <th>GPU</th>
                         <th>Bandwidth (Mbps)</th>
-                        <th>Cost per Hour ($)</th>
+                        <th>Cost per Minute ($)</th>
                         <th>Available</th>
                         <th/>
                     </tr>
@@ -157,15 +157,15 @@ function AddResource({tab}) {
                     <form onSubmit={(e) => { e.preventDefault(); addResource(); }}> {/* Form submission handler */}
                         <div>
                             <label htmlFor="cpu_cores">CPU Cores:</label>
-                            <input type="number" id="cpu_cores" name="cpu_cores" value={cpuCores} onChange={handleResourceInputChange} required />
+                            <input type="number" id="cpu_cores" name="cpu_cores" value={cpuCores} onChange={handleResourceInputChange} step="1" min="1" required />
                         </div>
                         <div>
                             <label htmlFor="memory">Memory (GB):</label>
-                            <input type="number" id="memory" name="memory" value={memory} onChange={handleResourceInputChange} required />
+                            <input type="number" id="memory" name="memory" value={memory} onChange={handleResourceInputChange} step="1" min="1" required />
                         </div>
                         <div>
                             <label htmlFor="storage">Storage (GB):</label>
-                            <input type="number" id="storage" name="storage" value={storage} onChange={handleResourceInputChange} required />
+                            <input type="number" id="storage" name="storage" value={storage} onChange={handleResourceInputChange} step="1" min="1" required />
                         </div>
                         <div>
                             <label htmlFor="gpu">GPU:</label>
@@ -173,11 +173,11 @@ function AddResource({tab}) {
                         </div>
                         <div>
                             <label htmlFor="bandwidth">Bandwidth (Mbps):</label>
-                            <input type="number" id="bandwidth" name="bandwidth" value={bandwidth} onChange={handleResourceInputChange} required />
+                            <input type="number" id="bandwidth" name="bandwidth" value={bandwidth} onChange={handleResourceInputChange} step="1" min="1" required />
                         </div>
                         <div>
-                            <label htmlFor="cost_per_hour">Cost per Hour ($):</label>
-                            <input type="number" id="cost_per_hour" name="cost_per_hour" value={costPerHour} onChange={handleResourceInputChange} step="0.01" required />
+                            <label htmlFor="cost_per_hour">Cost per Minute ($):</label>
+                            <input type="number" id="cost_per_hour" name="cost_per_hour" value={costPerHour} onChange={handleResourceInputChange} step="0.01" min="0.01" required />
                         </div>
                         <button type="submit">Add</button>
                     </form>
