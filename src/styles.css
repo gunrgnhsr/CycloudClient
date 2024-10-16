@@ -172,6 +172,9 @@ tr:nth-child(even) {
     max-width: 500px;
     border-radius: 10px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    text-align: left;
+    color: var(--text-color);
+
 }
 
 .close-modal {

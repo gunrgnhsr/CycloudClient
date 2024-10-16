@@ -16,7 +16,7 @@ function Client() {
                 </div>
                 {tab === 1 && <AddResource tab={tab}/>} 
                 {tab === 2 && <AddLoanRequest tab={tab}/>}
-                {tab === 3 && <SeeLoanRequests tab={tab}/>}
+                {tab === 3 && <SeeLoanRequests tab={tab}/>}    
             </div>
         );
 }
