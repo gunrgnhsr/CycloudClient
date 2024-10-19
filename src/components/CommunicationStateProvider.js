@@ -10,8 +10,23 @@ const useCommunication = () => {
 const CommunicationStateProvider = ({ children }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [serverUrl] = useState('http://localhost:8080/'); // Set your server URL here
+    const [serverUrl, setServerUrl] = useState('http://localhost:3001/'); // Set your server URL here
     const [loadingIterator, setLoadingIterator] = useState(0);
+    const [isLan, setIsLan] = useState(false);
+
+    const OpenLanCommunicationIndicator = () => {
+        
+        const changeServerUrl = () => {
+            setServerUrl(isLan ? 'http://localhost:3001/' : 'http://192.168.50.46:3001/');
+            setIsLan(isLan => !isLan);
+        };
+
+        return (
+            <>
+                {<button className='cta-button' style={{ backgroundColor: isLan ? 'green' : 'red' }}  onClick={()=>{changeServerUrl()}}>In Lan</button>}
+            </>
+        );
+    };
 
     const CommunicationIndicator = () => {        
         useEffect(() => {
@@ -123,7 +138,7 @@ const CommunicationStateProvider = ({ children }) => {
     };
 
     return (
-        <CommunicationContext.Provider value={{CommunicationIndicator, get, post, put, del, loading, error }}>
+        <CommunicationContext.Provider value={{OpenLanCommunicationIndicator ,CommunicationIndicator, get, post, put, del, loading, error }}>
             {children}
         </CommunicationContext.Provider>
     );

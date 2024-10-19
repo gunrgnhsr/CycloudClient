@@ -1,25 +1,29 @@
 :root {
-    --primary-color: #3498db;
+    --primary-color: #53636e;
     --secondary-color: #2ecc71;
     --background-color: #ecf0f1;
     --text-color: #2c3e50;
     --card-bg-color: #ffffff;
 }
 
+main *{
+    max-height: inherit;
+}
+
 body {
     font-family: 'Poppins', sans-serif;
+    height: 100%;
     margin: 0;
-    padding: 0;
+    padding-top: 0;
     background: linear-gradient(135deg, #ecf0f1, #bdc3c7);
     color: var(--text-color);
     line-height: 1.6;
 }
 
-.container {
-    width: 90%;
-    max-width: 1200px;
+.app-content {
+    max-width: 60%;
     margin: 0 auto;
-    padding: 20px;
+    float: center;
 }
 
 header {
@@ -45,14 +49,14 @@ h1, h2, h3 {
 }
 
 .cta-button {
-    display: inline-block;
+    /* display: inline-block; */
+    float: right;
     background-color: var(--secondary-color);
     color: white;
     padding: 12px 24px;
     text-decoration: none;
     border-radius: 30px;
     font-weight: bold;
-    margin-top: 20px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     cursor: pointer;
 }
@@ -60,6 +64,17 @@ h1, h2, h3 {
 .cta-button:hover {
     transform: translateY(-3px);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.add-resource-btn {
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 30px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 footer {
@@ -76,7 +91,7 @@ footer {
     overflow: hidden;
     border: none;
     background-color: transparent;
-    margin-bottom: 20px;
+    padding: 12px 0;
 }
 
 .tab button {
@@ -110,12 +125,13 @@ footer {
 }
 
 table {
-    width: 100%;
+    overflow-y: scroll;
+    display: block;
+    width: fit-content;
     border-collapse: collapse;
-    margin-top: 20px;
     background-color: var(--card-bg-color);
     border-radius: 5px;
-    overflow: hidden;
+    table-layout: fixed;
 }
 
 th, td {
@@ -125,35 +141,24 @@ th, td {
 }
 
 th {
-    background-color: var(--primary-color);
     color: white;
+}
+
+thead {
+    background-color: var(--primary-color);
+    position: sticky; /* Keep the header fixed */
+    top: 0;          /* Stick it to the top of the container */
+    z-index: 1;        /*Ensure the header is on top of the content*/
 }
 
 tr:nth-child(even) {
     background-color: #f2f2f2;
 }
 
-.add-resource-btn {
-    background-color: var(--secondary-color);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    font-size: 16px;
-    cursor: pointer;
-    float: right;
-    /* margin-top: 20px; */
-    border-radius: 30px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.add-resource-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-
 .modal {
+    max-height: none;
     position: fixed;
-    z-index: 1;
+    z-index: 2;
     left: 0;
     top: 0;
     width: 100%;
@@ -168,8 +173,8 @@ tr:nth-child(even) {
     margin: 10% auto;
     padding: 30px;
     border: none;
-    width: 50%;
-    max-width: 500px;
+    width: fit-content;
+    height: fit-content;
     border-radius: 10px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     text-align: left;
@@ -202,8 +207,8 @@ tr:nth-child(even) {
 }
 
 .form-group input {
-    width: 100%;
-    padding: 10px;
+    width: fit-content;
+    /* padding: 10px; */
     border: 1px solid #ddd;
     border-radius: 5px;
     font-size: 16px;
@@ -239,5 +244,4 @@ tr:nth-child(even) {
 
 .logo {
     max-width: 200px;
-    margin-bottom: 20px;
 }

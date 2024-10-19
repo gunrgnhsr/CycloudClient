@@ -11,7 +11,7 @@ function PersonalInfoModel() {
     const [rented, setRented] = useState(0);
     const [pendingLoanRequests, setPendingLoanRequests] = useState(0);
     const [loaned, setLoaned] = useState(0);
-    const [addedCredits, setAddedCredits] = useState(0);
+    const [addedCredits, setAddedCredits] = useState(0.1);
 
     const handleCreditsInputChange = (event) => {
         const { value } = event.target;
@@ -60,53 +60,51 @@ function PersonalInfoModel() {
     }
 
     
-        return (
-            isLoggedIn && (
-                <>
-                    <button className='cta-button' onClick={()=>{showUserPresonalInfo()}}>Status</button>
-                    {showPersonalInfo && (
-                        <div id="personalInfoModel" className="modal">
-                            <div className="modal-content">
-                                <span className="close-modal" onClick={()=>setShowPersonalInfo(false)}>&times;</span>
-                                <h2 id="personalInfoModel">Personal Status</h2>
-                                <div>
-                                    <label>Credits: {credit}</label>
-                                </div>
-                                <div>
-                                    <label>Resources: {resources}</label>
-                                </div>
-                                <div>
-                                    <label>Resources actively rented: {rented}</label>
-                                </div>
-                                <div>
-                                    <label>Pending loan requests: {pendingLoanRequests}</label>
-                                </div>
-                                <div>
-                                    <label>Resources actively loaned: {loaned}</label>
-                                </div>
-                                <div>
-                                    <button className='cta-button' onClick={()=>setShowAddCredits(true)}>Add Credits</button>
-                                </div>
+    return (
+        isLoggedIn && (
+            <>
+                <button className='cta-button' text-align='center' onClick={()=>{showUserPresonalInfo()}}>Status</button>
+                {showPersonalInfo && (
+                    <div id="personalInfoModel" className="modal">
+                        <div className="modal-content">
+                            <span className="close-modal" onClick={()=>setShowPersonalInfo(false)}>&times;</span>
+                            <h2 id="personalInfoModel">Personal Status</h2>
+                            <nav>
+                                <label>Credits: {credit}</label>
+                                <button className='cta-button' onClick={()=>setShowAddCredits(true)}>Add Credits</button>
+                            </nav>
+                            <div>
+                                <label>Resources: {resources}</label>
+                            </div>
+                            <div>
+                                <label>Resources actively rented: {rented}</label>
+                            </div>
+                            <div>
+                                <label>Pending loan requests: {pendingLoanRequests}</label>
+                            </div>
+                            <div>
+                                <label>Resources actively loaned: {loaned}</label>
                             </div>
                         </div>
-                    )}
-                    {showAddCredits && (
-                        <div id="addCreditsModel" className="modal">
-                            <div className="modal-content">
-                                <span className="close-modal" onClick={()=>setShowAddCredits(false)}>&times;</span>
-                                <h2 id="addCreditsModel">Add Credits</h2>
-                                <form onSubmit={(e) => { e.preventDefault(); addCredits(); }}>
-                                    <div>
-                                        <label htmlFor="amount">Amount of credits ($):</label>
-                                        <input type="number" id="amount" name="amount" value={addedCredits} onChange={handleCreditsInputChange} step="0.01" required />
-                                    </div>
-                                    <button type="submit">Add</button>
-                                </form>
-                            </div>
-                        </div>)}
-                </>
-            )
-        );
+                    </div>
+                )}
+                {showAddCredits && (
+                    <div id="addCreditsModel" className="modal">
+                        <div className="modal-content">
+                            <span className="close-modal" onClick={()=>setShowAddCredits(false)}>&times;</span>
+                            <h2 id="addCreditsModel">Add Credits</h2>
+                            <form onSubmit={(e) => { e.preventDefault(); addCredits(); }}>
+                                <div>
+                                    <label htmlFor="amount">Amount of credits ($):</label>
+                                    <input type="number" id="amount" name="amount" value={addedCredits} onChange={handleCreditsInputChange} step="0.01" min={0.01} required />
+                                </div>
+                                <button type="submit">Add</button>
+                            </form>
+                        </div>
+                    </div>)}
+            </>
+        )
+    );
 }
 
 export default PersonalInfoModel;

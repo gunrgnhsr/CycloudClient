@@ -8,11 +8,6 @@ const LoginStateProvider = ({ children }) => {
     const [ReCyCloudtoken, setReCyCloudtoken] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     
-    const [credit, setCredit] = useState(0);
-    const [rented, setRented] = useState(0);
-    const [loaned, setLoaned] = useState(0);
-    const [showPersonalInfo, setShowPersonalInfo] = useState(false);
-    
     const { get, post, put, del, loading, error } = useCommunication();
 
     const postAuthConfig =(config) => {
@@ -58,7 +53,7 @@ const LoginStateProvider = ({ children }) => {
     }
 
     useEffect(() => {
-        const intervalId = setInterval(()=>{checkOrUpdateToken(ReCyCloudtoken,false)}, 1000); // Check every second
+        const intervalId = setInterval(()=>{checkOrUpdateToken(ReCyCloudtoken,false)}, 5000); // Check every second
 
         return () => clearInterval(intervalId); // Cleanup on unmount
     });

@@ -1,14 +1,18 @@
 // src/components/Client.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {useLoginState} from '../LoginStateProvider';
-    
-function SeeLoanRequests({tab}) {
+import { getTotalHeight } from '../../utils/utils';
+
+function SeeLoanRequests({tab, availableHeight}) {
 
     const [loanRequestResourceSpec, setLoanRequestResourceSpec] = useState({});
     const [loanRequests, setLoanRequests] = useState([]);
 
     const [showResourceModel, setShowResourceModel] = useState(false);
     const { postAuthDel, postAuthGet } = useLoginState();
+
+    const h2Ref = useRef(null);
+    const [tableHeight, setTableHeight] = useState(availableHeight);
 
     const getLoanRequests = async () => {
         await postAuthGet(`get-loan-requests`, {})
@@ -66,34 +70,44 @@ function SeeLoanRequests({tab}) {
         setShowResourceModel(false);
     }
 
-  return (
+    useEffect(() => {
+        const calculateTableHeight = () => {
+            if(h2Ref.current){
+                setTableHeight(availableHeight- getTotalHeight(h2Ref.current));
+            }
+        }
+
+        calculateTableHeight();
+        window.addEventListener('resize', calculateTableHeight);
+        return () => window.removeEventListener('resize', calculateTableHeight);
+    }, [h2Ref.current !== null ? getTotalHeight(h2Ref.current) : h2Ref ,availableHeight]);
+
+    return (
         <>
-        <div>
-            <h2>My Loan Requests</h2>
-            <table>
-                <thead>
-                <tr>
-                    <th>Duration (Hours)</th>
-                    <th>Amount ($)</th>
-                    <th>Status</th>
-                    <th>Resource</th>
-                </tr>
-                </thead>
-                <tbody>
-                    {loanRequests.length > 0 && (
-                        loanRequests.map((loan, index) => (
-                        <tr key={index}>
-                        <td>{loan.duration}</td>
-                        <td>{loan.amount}</td>
-                        <td>{loan.status}</td>
-                        <td><button className='cta-button' onClick={()=>{ShowResourceSpecs(loan.rid)}}>show</button></td>
-                        <td><button className='cta-button' onClick={()=>{removeUserLoanRequest(loan.bid)}}>remove</button></td>
-                        </tr>
-                        ))
-                    )}
-                </tbody>
-            </table>
-        </div>
+        <h2 ref={h2Ref}>My Loan Requests</h2>
+        <table style={{maxHeight: tableHeight}}>
+            <thead>
+            <tr>
+                <th>Duration (Hours)</th>
+                <th>Amount ($)</th>
+                <th>Status</th>
+                <th>Resource</th>
+            </tr>
+            </thead>
+            <tbody>
+                {loanRequests.length > 0 && (
+                    loanRequests.map((loan, index) => (
+                    <tr key={index}>
+                    <td>{loan.duration}</td>
+                    <td>{loan.amount}</td>
+                    <td>{loan.status}</td>
+                    <td><button className='cta-button' onClick={()=>{ShowResourceSpecs(loan.rid)}}>show</button></td>
+                    <td><button className='cta-button' onClick={()=>{removeUserLoanRequest(loan.bid)}}>remove</button></td>
+                    </tr>
+                    ))
+                )}
+            </tbody>
+        </table>
         {showResourceModel && (
             <div id="resourceModal" className="modal">
                 <div className="modal-content">

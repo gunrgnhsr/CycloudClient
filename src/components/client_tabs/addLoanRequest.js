@@ -1,8 +1,9 @@
 // src/components/addLoanRequest.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {useLoginState} from '../LoginStateProvider';
-    
-function AddLoanRequest({tab}) {
+import { getTotalHeight } from '../../utils/utils';
+
+function AddLoanRequest({tab, availableHeight}) {
     
     // Loan request state
     const [loanRequestRid, setLoanRequestRid] = useState(0);
@@ -17,6 +18,9 @@ function AddLoanRequest({tab}) {
 
     const [showAddLoanModal, setShowAddLoanModal] = useState(false);
     const { postAuthPost,  postAuthGet } = useLoginState();
+
+    const h2Ref = useRef(null);
+    const [tableHeight, setTableHeight] = useState(availableHeight);
 
     const getAvailableResources = async () => {
         await postAuthGet(`available-resources/${0}/${"next"}`, {}) ///${lastAvailableResource}/${"next"} change to this
@@ -88,58 +92,68 @@ function AddLoanRequest({tab}) {
         setSufficientFunds(true);
     };
 
-  return (
+    useEffect(() => {
+        const calculateTableHeight = () => {
+            if(h2Ref.current){
+                setTableHeight(availableHeight-getTotalHeight(h2Ref.current));
+            }
+        }
+
+        calculateTableHeight();
+        window.addEventListener('resize', calculateTableHeight);
+        return () => window.removeEventListener('resize', calculateTableHeight);
+    }, [h2Ref.current !== null ? getTotalHeight(h2Ref.current) : h2Ref ,availableHeight]);
+
+    return (
     <>
-        <div>
-            <h2>Available Computing Resources To Loan</h2>
-            <table>
-                <thead>
-                <tr>
-                    <th>CPU Cores</th>
-                    <th>Memory (GB)</th>
-                    <th>Storage (GB)</th>
-                    <th>GPU</th>
-                    <th>Bandwidth (Mbps)</th>
-                    <th>Cost per Minute ($)</th>
-                    <th/>
+    <h2 ref={h2Ref}>Available Computing Resources To Loan</h2>
+    <table style={{maxHeight: tableHeight}}>
+        <thead>
+        <tr>
+            <th>CPU Cores</th>
+            <th>Memory (GB)</th>
+            <th>Storage (GB)</th>
+            <th>GPU</th>
+            <th>Bandwidth (Mbps)</th>
+            <th>Cost per Minute ($)</th>
+            <th/>
+        </tr>
+        </thead>
+        <tbody>
+            {availableResources.length > 0 && (
+                availableResources.map((resource, index) => (
+                <tr key={index}>
+                <td>{resource.cpuCores}</td>
+                <td>{resource.memory}</td>
+                <td>{resource.storage}</td>
+                <td>{resource.gpu}</td>
+                <td>{resource.bandwidth}</td>
+                <td>{resource.costPerHour}</td>
+                <td><button className='cta-button' onClick={()=>{handleLoanRequestClick(resource.rid, resource.costPerHour)}}>loan</button></td>
                 </tr>
-                </thead>
-                <tbody>
-                    {availableResources.length > 0 && (
-                        availableResources.map((resource, index) => (
-                        <tr key={index}>
-                        <td>{resource.cpuCores}</td>
-                        <td>{resource.memory}</td>
-                        <td>{resource.storage}</td>
-                        <td>{resource.gpu}</td>
-                        <td>{resource.bandwidth}</td>
-                        <td>{resource.costPerHour}</td>
-                        <td><button className='cta-button' onClick={()=>{handleLoanRequestClick(resource.rid, resource.costPerHour)}}>loan</button></td>
-                        </tr>
-                        ))
-                    )}
-                </tbody>
-            </table>
-        </div>    
-        {showAddLoanModal && (
-            <div id="addLoanModal" className="modal">
-                <div className="modal-content">
-                    <span className="close-modal" onClick={()=>setShowAddLoanModal(false)}>&times;</span>
-                    <h2 id="addLoanModalTitle">Add Loan Request</h2>
-                    <form onSubmit={(e) => { e.preventDefault(); addLoan(); }}> {/* Form submission handler */}
-                        <div>
-                            <label htmlFor="amount">Amount ($):</label>
-                            <input type="number" id="amount" name="amount" value={amount} onChange={handleLoanInputChange} step="0.01" min={loanResourceCostPerMinute}  required />
-                        </div>
-                        <div>
-                            <label htmlFor="duration">duration (Minutes):</label>
-                            <input type="number" id="duration" name="duration" value={duration} onChange={handleLoanInputChange} step="1" min="1" required />
-                        </div>
-                        <button type="submit">Add</button>
-                    </form>
-                </div>
+                ))
+            )}
+        </tbody>
+    </table>
+    {showAddLoanModal && (
+        <div id="addLoanModal" className="modal">
+            <div className="modal-content">
+                <span className="close-modal" onClick={()=>setShowAddLoanModal(false)}>&times;</span>
+                <h2 id="addLoanModalTitle">Add Loan Request</h2>
+                <form onSubmit={(e) => { e.preventDefault(); addLoan(); }}> {/* Form submission handler */}
+                    <div>
+                        <label htmlFor="amount">Amount ($):</label>
+                        <input type="number" id="amount" name="amount" value={amount} onChange={handleLoanInputChange} step="0.01" min={loanResourceCostPerMinute}  required />
+                    </div>
+                    <div>
+                        <label htmlFor="duration">duration (Minutes):</label>
+                        <input type="number" id="duration" name="duration" value={duration} onChange={handleLoanInputChange} step="1" min="1" required />
+                    </div>
+                    <button type="submit">Add</button>
+                </form>
             </div>
-        )}
+        </div>
+    )}
     </>  
     );
 }

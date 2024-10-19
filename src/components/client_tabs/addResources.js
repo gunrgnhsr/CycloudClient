@@ -1,8 +1,9 @@
 // src/components/Client.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {useLoginState} from '../LoginStateProvider';
+import { getTotalHeight } from '../../utils/utils';
     
-function AddResource({tab}) {    
+function AddResource({tab, availableHeight}) {    
     const [resources, setResources] = useState([]);
 
     // Resource request state
@@ -15,6 +16,9 @@ function AddResource({tab}) {
 
     const [showAddResourceModal, setShowAddResourceModal] = useState(false);
     const { postAuthPost, postAuthPut, postAuthDel, postAuthGet } = useLoginState();
+
+    const navRef = useRef(null);
+    const [tableHeight, setTableHeight] = useState(availableHeight);
 
     const getResouces = async () => {
         await postAuthGet(`get-user-resources`, {})
@@ -113,42 +117,54 @@ function AddResource({tab}) {
             });
     }
 
-  return (
+    useEffect(() => {
+        const calculateTableHeight = () => {
+            if(navRef.current){
+                setTableHeight(availableHeight- getTotalHeight(navRef.current));
+            }
+        }
+
+        calculateTableHeight();
+        window.addEventListener('resize', calculateTableHeight);
+        return () => window.removeEventListener('resize', calculateTableHeight);
+    }, [navRef.current !== null ? getTotalHeight(navRef.current) : navRef ,availableHeight]);
+
+    return (
         <>  
-        <div>
-            <button className="add-resource-btn" onClick={handleAddResourceClick}>Add Resource</button>
+        <nav className='container' ref={navRef}>
             <h2>My Computing Resources For Rent</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>CPU Cores</th>
-                        <th>Memory (GB)</th>
-                        <th>Storage (GB)</th>
-                        <th>GPU</th>
-                        <th>Bandwidth (Mbps)</th>
-                        <th>Cost per Minute ($)</th>
-                        <th>Available</th>
-                        <th/>
+            <button className="cta-button" onClick={handleAddResourceClick}>Add Resource</button>
+        </nav>
+        <table style={{maxHeight: tableHeight}}>
+            <thead>
+                <tr>
+                    <th>CPU Cores</th>
+                    <th>Memory (GB)</th>
+                    <th>Storage (GB)</th>
+                    <th>GPU</th>
+                    <th>Bandwidth (Mbps)</th>
+                    <th>Cost per Minute ($)</th>
+                    <th>Available</th>
+                    <th/>
+                </tr>
+            </thead>
+            <tbody>
+                {resources.length > 0 && (
+                    resources.map((resource, index) => (
+                    <tr key={index}>
+                    <td>{resource.cpuCores}</td>
+                    <td>{resource.memory}</td>
+                    <td>{resource.storage}</td>
+                    <td>{resource.gpu}</td>
+                    <td>{resource.bandwidth}</td>
+                    <td>{resource.costPerHour}</td>
+                    <td><button className='cta-button' style={{ backgroundColor: resource.available ? 'green' : 'red' }}  onClick={()=>{changeAvailability(resource.rid,resource.available)}}>available</button></td>
+                    <td><button className='cta-button' onClick={()=>{removeUserResource(resource.rid)}}>Remove</button></td>
                     </tr>
-                </thead>
-                <tbody>
-                    {resources.length > 0 && (
-                        resources.map((resource, index) => (
-                        <tr key={index}>
-                        <td>{resource.cpuCores}</td>
-                        <td>{resource.memory}</td>
-                        <td>{resource.storage}</td>
-                        <td>{resource.gpu}</td>
-                        <td>{resource.bandwidth}</td>
-                        <td>{resource.costPerHour}</td>
-                        <td><button className='cta-button' style={{ backgroundColor: resource.available ? 'green' : 'red' }}  onClick={()=>{changeAvailability(resource.rid,resource.available)}}>available</button></td>
-                        <td><button className='cta-button' onClick={()=>{removeUserResource(resource.rid)}}>Remove</button></td>
-                        </tr>
-                        ))
-                    )}
-                </tbody>
-            </table>
-        </div>
+                    ))
+                )}
+            </tbody>
+        </table>
         {showAddResourceModal && (
             <div id="addResourceModal" className="modal">
                 <div className="modal-content">

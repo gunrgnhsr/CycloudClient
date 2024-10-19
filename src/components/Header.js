@@ -4,18 +4,18 @@ import {useLoginState} from './LoginStateProvider';
 import {useCommunication}  from './CommunicationStateProvider';
 
 
-function Header() {
+const Header = React.forwardRef((props, ref) => {
     const {LogoutModel} = useLoginState();
     const { CommunicationIndicator } = useCommunication();
 
     return (
-      <header>
-          <nav className="container">
+      <header ref={ref}>
+          <nav className="app-content">
               <CommunicationIndicator />
               <LogoutModel/>
           </nav>
       </header>
     );
-}
+});
 
 export default Header;
