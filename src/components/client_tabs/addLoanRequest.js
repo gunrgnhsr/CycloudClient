@@ -115,7 +115,7 @@ function AddLoanRequest({tab, availableHeight}) {
             <th>Storage (GB)</th>
             <th>GPU</th>
             <th>Bandwidth (Mbps)</th>
-            <th>Cost per Minute ($)</th>
+            <th>Cost ($pm)</th>
             <th/>
         </tr>
         </thead>

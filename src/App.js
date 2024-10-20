@@ -46,7 +46,7 @@ function App() {
             <Header ref={headerRef}/>
 
             {/* Main content area */}
-            <main className="app-content" style={{ maxHeight: mainHeight}}>
+            <main className="client-content" style={{ maxHeight: mainHeight}}>
                 {!isLoggedIn ? <LandingPage/> : <Client mainHeight={mainHeight}/>}
             </main>
 

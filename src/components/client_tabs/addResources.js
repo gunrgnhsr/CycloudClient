@@ -143,7 +143,7 @@ function AddResource({tab, availableHeight}) {
                     <th>Storage (GB)</th>
                     <th>GPU</th>
                     <th>Bandwidth (Mbps)</th>
-                    <th>Cost per Minute ($)</th>
+                    <th>Cost ($pm)</th>
                     <th>Available</th>
                     <th/>
                 </tr>
@@ -192,7 +192,7 @@ function AddResource({tab, availableHeight}) {
                             <input type="number" id="bandwidth" name="bandwidth" value={bandwidth} onChange={handleResourceInputChange} step="1" min="1" required />
                         </div>
                         <div>
-                            <label htmlFor="cost_per_hour">Cost per Minute ($):</label>
+                            <label htmlFor="cost_per_hour">Cost ($pm):</label>
                             <input type="number" id="cost_per_hour" name="cost_per_hour" value={costPerHour} onChange={handleResourceInputChange} step="0.01" min="0.01" required />
                         </div>
                         <button type="submit">Add</button>
