@@ -1,6 +1,7 @@
 // src/components/addLoanRequest.js
 import React, { useEffect, useState, useRef } from 'react';
-import {useLoginState} from '../LoginStateProvider';
+import {useLoginState} from '../../providers/LoginStateProvider';
+import { useCommunication } from '../../providers/CommunicationStateProvider';
 import { getTotalHeight } from '../../utils/utils';
 
 function AddLoanRequest({tab, availableHeight}) {
@@ -17,10 +18,13 @@ function AddLoanRequest({tab, availableHeight}) {
     const [firstAvailableResource, setFirstAvailableResource] = useState("0");
 
     const [showAddLoanModal, setShowAddLoanModal] = useState(false);
-    const { postAuthPost,  postAuthGet } = useLoginState();
+    const { postAuthPost,  postAuthGet, postAuthFetch} = useLoginState();
+    const { establishSSEStream } = useCommunication();
 
     const h2Ref = useRef(null);
     const [tableHeight, setTableHeight] = useState(availableHeight);
+
+    const [bidToWebWorker, setBidToWebWorker] = useState({});
 
     const getAvailableResources = async () => {
         await postAuthGet(`available-resources/${0}/${"next"}`, {}) ///${lastAvailableResource}/${"next"} change to this
@@ -64,33 +68,51 @@ function AddLoanRequest({tab, availableHeight}) {
     };
 
     const [sufficientFunds, setSufficientFunds] = useState(true);
+
     const addLoan = async () => {
         const newLoanRequest = {
-            rid: loanRequestRid,
-            duration: duration,
-            amount: amount
+            RID: loanRequestRid,
+            Amount: amount,
+            Duration: duration
         };
-        await postAuthPost('place-loan-request', newLoanRequest, {})
+        await postAuthFetch('place-loan-request', 'POST', JSON.stringify(newLoanRequest), {})
             .then(response => {
                 if (response.status === 201) {
                     getAvailableResources();
                     console.log('Loan request added:', response.data);
-                }
-                else {
+                    establishSSEStream(
+                        response,
+                        (message) => {
+                            if(message.data === 'bid is rejected'){
+                                console.log('bid rejected because of: ', message.reason);
+                            }else if(message.data === 'starting connection'){
+                                console.log('starting connection with the loaner');
+                            } else if(message.data === 'connection ended'){
+                                console.log('ending connection with the loaner');
+                            } else if(message.data === 'error occurred'){
+                                console.error('error occurred: ', message.reason);
+                            }
+                            else {
+                                console.log('unknown message: ', message.data);
+                            }
+                        }
+                    );
+                } else {
                     console.error('Failed to add loan request:', response.statusText);
                 }
             }).catch(error => {
-                if (error.status === 402) {
+                if (error.status === 402 || error.status === 412) {
                     alert(error.response.data);
                     setSufficientFunds(false);
+                    console.error('One of the precondition did not pass: ', error.response.data);
                 }
-                console.error('Error adding loan request:', error);
+                return false                            
             });
         if (sufficientFunds) {
             setShowAddLoanModal(false);
         }
         setSufficientFunds(true);
-    };
+    }
 
     useEffect(() => {
         const calculateTableHeight = () => {

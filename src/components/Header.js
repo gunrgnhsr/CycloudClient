@@ -1,7 +1,7 @@
 // src/components/Header.js
 import React from 'react';
-import {useLoginState} from './LoginStateProvider';
-import {useCommunication}  from './CommunicationStateProvider';
+import {useLoginState} from '../providers/LoginStateProvider';
+import {useCommunication}  from '../providers/CommunicationStateProvider';
 
 
 const Header = React.forwardRef((props, ref) => {

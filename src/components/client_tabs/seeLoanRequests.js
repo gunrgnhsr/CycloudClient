@@ -1,6 +1,6 @@
 // src/components/Client.js
 import React, { useEffect, useState, useRef } from 'react';
-import {useLoginState} from '../LoginStateProvider';
+import {useLoginState} from '../../providers/LoginStateProvider';
 import { getTotalHeight } from '../../utils/utils';
 
 function SeeLoanRequests({tab, availableHeight}) {
@@ -88,7 +88,7 @@ function SeeLoanRequests({tab, availableHeight}) {
         <table style={{maxHeight: tableHeight}}>
             <thead>
             <tr>
-                <th>Duration (Hours)</th>
+                <th>Duration (Minutes)</th>
                 <th>Amount ($)</th>
                 <th>Status</th>
                 <th>Resource</th>
@@ -129,7 +129,7 @@ function SeeLoanRequests({tab, availableHeight}) {
                         <label htmlFor="bandwidth">Bandwidth (Mbps): {loanRequestResourceSpec.bandwidth}</label>
                     </div>
                     <div>
-                        <label htmlFor="cost_per_hour">Cost per Hour ($): {loanRequestResourceSpec.costPerHour}</label>
+                        <label htmlFor="cost_per_hour">Cost ($pm): {loanRequestResourceSpec.costPerHour}</label>
                     </div>
                 </div>
             </div>

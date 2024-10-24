@@ -8,7 +8,7 @@ const LoginStateProvider = ({ children }) => {
     const [ReCyCloudtoken, setReCyCloudtoken] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     
-    const { get, post, put, del, loading, error } = useCommunication();
+    const { get, post, put, del, fetchRequest, loading, error } = useCommunication();
 
     const postAuthConfig =(config) => {
         return {
@@ -34,6 +34,10 @@ const LoginStateProvider = ({ children }) => {
 
     const postAuthGet = async (endpoint, config) => {
         return await get(endpoint, postAuthConfig(config));
+    }
+
+    const postAuthFetch = async (endpoint, method , data , config) => {
+        return await fetchRequest(endpoint, method , data , postAuthConfig(config));
     }
 
     const checkOrUpdateToken = (token, isUpdate) => {
@@ -155,7 +159,7 @@ const LoginStateProvider = ({ children }) => {
     }
 
     return (
-        <LoginStateContext.Provider value={{ isLoggedIn, LoginModel , LogoutModel, postAuthPost, postAuthPut, postAuthDel, postAuthGet }}> 
+        <LoginStateContext.Provider value={{ isLoggedIn, LoginModel , LogoutModel, postAuthPost, postAuthPut, postAuthDel, postAuthGet, postAuthFetch}}> 
             {children}
         </LoginStateContext.Provider>
     );

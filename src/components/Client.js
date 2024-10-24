@@ -29,7 +29,7 @@ function Client({mainHeight}) {
 
 
     return (
-            <>
+            <main className='client' style={{maxHeight: mainHeight}}>
                 <nav ref={navRef}>
                     <div className="tab">
                         <button onClick={() => setTab(1)} className={tab === 1 ? 'active' : ''}>Rents</button>
@@ -41,7 +41,7 @@ function Client({mainHeight}) {
                 {tab === 1 && <AddResource tab={tab} availableHeight={availableHeight}/>} 
                 {tab === 2 && <AddLoanRequest tab={tab} availableHeight={availableHeight}/>}
                 {tab === 3 && <SeeLoanRequests tab={tab} availableHeight={availableHeight}/>} 
-            </>
+            </main>
         );
 }
 

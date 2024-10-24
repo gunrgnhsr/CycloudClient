@@ -1,6 +1,7 @@
 // src/components/Client.js
 import React, { useEffect, useState, useRef } from 'react';
-import {useLoginState} from '../LoginStateProvider';
+import {useLoginState} from '../../providers/LoginStateProvider';
+import { useCommunication } from '../../providers/CommunicationStateProvider';
 import { getTotalHeight } from '../../utils/utils';
     
 function AddResource({tab, availableHeight}) {    
@@ -15,12 +16,15 @@ function AddResource({tab, availableHeight}) {
     const [costPerHour, setCostPerHour] = useState(2);
 
     const [showAddResourceModal, setShowAddResourceModal] = useState(false);
-    const { postAuthPost, postAuthPut, postAuthDel, postAuthGet } = useLoginState();
+    const { postAuthPost, postAuthPut, postAuthDel, postAuthGet , postAuthFetch } = useLoginState();
+    const { establishSSEStream } = useCommunication();
+
+    const [ridToWebWorker, setRidToWebWorker] = useState({});
 
     const navRef = useRef(null);
     const [tableHeight, setTableHeight] = useState(availableHeight);
 
-    const getResouces = async () => {
+    const getResources = async () => {
         await postAuthGet(`get-user-resources`, {})
             .then(response => {
                 if (response.status === 200) {
@@ -37,7 +41,7 @@ function AddResource({tab, availableHeight}) {
 
     useEffect(() => {
         if(tab === 1){
-            getResouces();
+            getResources();
         }
     }, [tab]);
 
@@ -74,7 +78,7 @@ function AddResource({tab, availableHeight}) {
         await postAuthPost('add-user-resources', newResource, {})
             .then(response => {
                 if (response.status === 201) {
-                    getResouces();
+                    getResources();
                     console.log('Resource added:', response.data);
                 } else {
                     console.error('Failed to add resource:', response.statusText);
@@ -90,7 +94,7 @@ function AddResource({tab, availableHeight}) {
         await postAuthDel(`delete-user-resource/${rid}`, {})
             .then(response => {
                 if (response.status === 200) {
-                    getResouces();
+                    getResources();
                     console.log('Resource deleted:', response.data);
                 } else {
                     console.error('Failed to delete resource:', response.statusText);
@@ -102,19 +106,34 @@ function AddResource({tab, availableHeight}) {
     }
 
 
-    const changeAvailability = async (rid, available) => {
-        await postAuthPut(`update-resource-availability/${rid}`, { available: available }, {})
+    const changeAvailability = async (rid, available) => { 
+        await postAuthFetch(`update-resource-availability/${rid}` , 'POST', { available: available }, {})
             .then(response => {
                 if (response.status === 200) {
-                    getResouces();
+                    getResources();
                     console.log('Resource availability updated:', response.data);
-                } else {
-                    console.error('Failed to update resource:', response.statusText);
+                    establishSSEStream(
+                        response,
+                        (message) => {
+                            if(message.data === 'no bids for resource'){
+                                getResources();
+                                console.log('No bids for resource: ', rid);
+                            }else if(message.data === 'starting connection'){
+                                console.log('starting connection with the loaner');
+                            } else if(message.data === 'connection ended'){
+                                console.log('ending connection with the loaner');
+                            }else {
+                                console.log('unknown message: ', message.data);
+                            }
+                        }
+                    );
+                }else {   
+                    console.error('Error updating resource availability:');
                 }
-            })
-            .catch(error => {
-                console.error('Error updating resource:', error);
-            });
+            }).catch(error => {
+                console.error('Error:', error);
+            }
+        );  
     }
 
     useEffect(() => {

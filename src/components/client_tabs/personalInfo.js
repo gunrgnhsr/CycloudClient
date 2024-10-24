@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useLoginState } from '../LoginStateProvider';
+import { useLoginState } from '../../providers/LoginStateProvider';
 
 function PersonalInfoModel() {
     const { postAuthGet, postAuthPost, isLoggedIn } = useLoginState();

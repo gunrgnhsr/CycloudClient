@@ -4,7 +4,7 @@ import Header from './components/Header';
 import LandingPage from './components/LandingPage';
 import Client from './components/Client';
 import Footer from './components/Footer';
-import {useLoginState} from './components/LoginStateProvider';
+import {useLoginState} from './providers/LoginStateProvider';
 import { getTotalHeight } from './utils/utils';
 
 // This is the main App component that will be rendered
@@ -25,8 +25,8 @@ function App() {
     useEffect(() => {
         const calculateMainHeight = () => {
             if (footerRef.current && headerRef.current) {
-                const footerHeight = getTotalHeight(footerRef.current);
-                const headerHeight = getTotalHeight(headerRef.current);
+                const footerHeight = footerRef.current.offsetHeight;
+                const headerHeight = headerRef.current.offsetHeight;
                 const windowHeight = window.innerHeight;
                 const maxHeight = windowHeight - footerHeight - headerHeight;
                 setMainHeight(maxHeight);
@@ -38,7 +38,7 @@ function App() {
         window.addEventListener('resize', calculateMainHeight); // Recalculate on window resize
 
         return () => window.removeEventListener('resize', calculateMainHeight); // Clean up event listener
-    }, [footerRef.current !== null ? getTotalHeight(footerRef.current): footerRef.current, headerRef.current !== null ? getTotalHeight(headerRef.current) : headerRef.current]);
+    }, [footerRef.current !== null ? footerRef.current.offsetHeight: footerRef.current, headerRef.current !== null ? headerRef.current.offsetHeight : headerRef.current]);
 
     return (
         <div className="app-container">
@@ -46,10 +46,8 @@ function App() {
             <Header ref={headerRef}/>
 
             {/* Main content area */}
-            <main className="client-content" style={{ maxHeight: mainHeight}}>
-                {!isLoggedIn ? <LandingPage/> : <Client mainHeight={mainHeight}/>}
-            </main>
-
+            {!isLoggedIn ? <LandingPage/> : <Client mainHeight={mainHeight}/>}
+            
             {/* Footer component */}
             <Footer ref={footerRef}/>
         </div>
