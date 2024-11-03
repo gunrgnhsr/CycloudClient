@@ -18,8 +18,8 @@ function AddLoanRequest({tab, availableHeight}) {
     const [firstAvailableResource, setFirstAvailableResource] = useState("0");
 
     const [showAddLoanModal, setShowAddLoanModal] = useState(false);
-    const { postAuthPost,  postAuthGet, postAuthFetch} = useLoginState();
-    const { establishSSEStream } = useCommunication();
+    const { postAuthPost,  postAuthGet, postAuthFetch, postAuthWebSocket} = useLoginState();
+    const { establishSSEStream, establishP2PConnection, sendIceCandidate , closeP2PConnection, handleIceCandidate, handleOffer, sendWebSocketMessage, closeWebSocket } = useCommunication();
 
     const h2Ref = useRef(null);
     const [tableHeight, setTableHeight] = useState(availableHeight);
@@ -67,27 +67,54 @@ function AddLoanRequest({tab, availableHeight}) {
         setShowAddLoanModal(true);
     };
 
-    const [sufficientFunds, setSufficientFunds] = useState(true);
-
-    const addLoan = async () => {
+    const addLoan = async (rid,amount,duration) => {
         const newLoanRequest = {
-            RID: loanRequestRid,
+            RID: rid,
             Amount: amount,
             Duration: duration
         };
         await postAuthFetch('place-loan-request', 'POST', JSON.stringify(newLoanRequest), {})
-            .then(response => {
+            .then(async response => {
                 if (response.status === 201) {
                     getAvailableResources();
+                    setShowAddLoanModal(false);
                     console.log('Loan request added:', response.data);
-                    establishSSEStream(
+                    await establishSSEStream(
                         response,
-                        (message) => {
+                        async (message) => {
                             if(message.data === 'bid is rejected'){
                                 console.log('bid rejected because of: ', message.reason);
                             }else if(message.data === 'starting connection'){
-                                console.log('starting connection with the loaner');
+                                await postAuthWebSocket(
+                                    `accept-connection-offer/${rid}`, 
+                                    async (rawMessage) => {
+                                        const message = JSON.parse(rawMessage.data);
+                                        if (message.type === 'offer') {
+                                            console.log('starting connection with the loaner');
+                                            await establishP2PConnection(rid);            
+                                            const answer = await handleOffer(message.offer,rid);
+                                            if(answer){
+                                                await sendWebSocketMessage(rid,answer);
+                                            } else {
+                                                console.error('error occurred while handling offer');
+                                            }
+                                        } else if (message.type === 'iceCandidates') {
+                                            await handleIceCandidate(message.iceCandidates,rid);
+                                            await sendIceCandidate(rid, sendWebSocketMessage);
+                                        } else if (message.error) {
+                                            console.error('error occurred: ', message.error);
+                                        } else {
+                                            console.log('unknown message: ', message);
+                                        }
+                                    },
+                                    rid,
+                                    (error) => {
+                                        console.error('Error during WebSocket:', error);
+                                    }
+                                );
                             } else if(message.data === 'connection ended'){
+                                await closeP2PConnection(rid);
+                                await closeWebSocket(rid);
                                 console.log('ending connection with the loaner');
                             } else if(message.data === 'error occurred'){
                                 console.error('error occurred: ', message.reason);
@@ -103,15 +130,10 @@ function AddLoanRequest({tab, availableHeight}) {
             }).catch(error => {
                 if (error.status === 402 || error.status === 412) {
                     alert(error.response.data);
-                    setSufficientFunds(false);
                     console.error('One of the precondition did not pass: ', error.response.data);
                 }
                 return false                            
             });
-        if (sufficientFunds) {
-            setShowAddLoanModal(false);
-        }
-        setSufficientFunds(true);
     }
 
     useEffect(() => {
@@ -162,7 +184,7 @@ function AddLoanRequest({tab, availableHeight}) {
             <div className="modal-content">
                 <span className="close-modal" onClick={()=>setShowAddLoanModal(false)}>&times;</span>
                 <h2 id="addLoanModalTitle">Add Loan Request</h2>
-                <form onSubmit={(e) => { e.preventDefault(); addLoan(); }}> {/* Form submission handler */}
+                <form onSubmit={(e) => { e.preventDefault(); addLoan(loanRequestRid,amount,duration); }}> {/* Form submission handler */}
                     <div>
                         <label htmlFor="amount">Amount ($):</label>
                         <input type="number" id="amount" name="amount" value={amount} onChange={handleLoanInputChange} step="0.01" min={loanResourceCostPerMinute}  required />

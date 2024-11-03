@@ -16,8 +16,8 @@ function AddResource({tab, availableHeight}) {
     const [costPerHour, setCostPerHour] = useState(2);
 
     const [showAddResourceModal, setShowAddResourceModal] = useState(false);
-    const { postAuthPost, postAuthPut, postAuthDel, postAuthGet , postAuthFetch } = useLoginState();
-    const { establishSSEStream } = useCommunication();
+    const { postAuthPost, postAuthPut, postAuthDel, postAuthGet , postAuthFetch , postAuthWebSocket } = useLoginState();
+    const { establishSSEStream, establishP2PConnection , sendIceCandidate, closeP2PConnection, handleIceCandidate, createOffer, handleAnswer, sendWebSocketMessage, closeWebSocket, setShowP2PMessagesModal, P2PCommunicationModel } = useCommunication();
 
     const [ridToWebWorker, setRidToWebWorker] = useState({});
 
@@ -108,19 +108,51 @@ function AddResource({tab, availableHeight}) {
 
     const changeAvailability = async (rid, available) => { 
         await postAuthFetch(`update-resource-availability/${rid}` , 'POST', { available: available }, {})
-            .then(response => {
+            .then(async response => {
                 if (response.status === 200) {
                     getResources();
                     console.log('Resource availability updated:', response.data);
-                    establishSSEStream(
+                    await establishSSEStream(
                         response,
-                        (message) => {
+                        async (message) => {
                             if(message.data === 'no bids for resource'){
                                 getResources();
                                 console.log('No bids for resource: ', rid);
                             }else if(message.data === 'starting connection'){
-                                console.log('starting connection with the loaner');
+                                await postAuthWebSocket(
+                                    `make-connection-offer/${rid}`, 
+                                    async (rawMessage) => {
+                                        const message = JSON.parse(rawMessage.data);
+                                        if (message.type === 'start') {
+                                            console.log('starting connection with the loaner');
+                                            await establishP2PConnection(rid);                                
+                                            const offer = await createOffer(rid);
+                                            if (offer) {
+                                                await sendWebSocketMessage(rid, offer);
+                                            } else {
+                                                console.error('error occurred while creating offer');
+                                            }
+                                        } else if (message.type === 'answer') {
+                                            await handleAnswer(message.answer, rid);
+                                            await sendIceCandidate(rid, sendWebSocketMessage);   
+                                        } else if (message.type === 'iceCandidates') {
+                                            await handleIceCandidate(message.iceCandidates,rid);
+                                            await sendIceCandidate(rid, sendWebSocketMessage);
+                                        } else if (message.error) {
+                                            console.error('error occurred: ', message.error);
+                                        } else {
+                                            console.log('unknown message: ', message);
+                                        }
+                                    },
+                                    rid,
+                                    (error) => {
+                                        console.error('Error during WebSocket:', error);
+                                    }
+                                );
                             } else if(message.data === 'connection ended'){
+                                getResources();
+                                await closeP2PConnection(rid);
+                                await closeWebSocket(rid);
                                 console.log('ending connection with the loaner');
                             }else {
                                 console.log('unknown message: ', message.data);
@@ -178,6 +210,7 @@ function AddResource({tab, availableHeight}) {
                     <td>{resource.bandwidth}</td>
                     <td>{resource.costPerHour}</td>
                     <td><button className='cta-button' style={{ backgroundColor: resource.available ? 'green' : 'red' }}  onClick={()=>{changeAvailability(resource.rid,resource.available)}}>available</button></td>
+                    <td><button className='cta-button' onClick={()=>{setShowP2PMessagesModal(resource.rid)}}>messages</button></td>
                     <td><button className='cta-button' onClick={()=>{removeUserResource(resource.rid)}}>Remove</button></td>
                     </tr>
                     ))
@@ -219,6 +252,7 @@ function AddResource({tab, availableHeight}) {
                 </div>
             </div>
         )}
+        <P2PCommunicationModel/>
         </>
     );
 }

@@ -1,6 +1,7 @@
 // src/components/Client.js
 import React, { useEffect, useState, useRef } from 'react';
 import {useLoginState} from '../../providers/LoginStateProvider';
+import { useCommunication } from '../../providers/CommunicationStateProvider';
 import { getTotalHeight } from '../../utils/utils';
 
 function SeeLoanRequests({tab, availableHeight}) {
@@ -10,6 +11,7 @@ function SeeLoanRequests({tab, availableHeight}) {
 
     const [showResourceModel, setShowResourceModel] = useState(false);
     const { postAuthDel, postAuthGet } = useLoginState();
+    const { setShowP2PMessagesModal, P2PCommunicationModel } = useCommunication();
 
     const h2Ref = useRef(null);
     const [tableHeight, setTableHeight] = useState(availableHeight);
@@ -102,6 +104,7 @@ function SeeLoanRequests({tab, availableHeight}) {
                     <td>{loan.amount}</td>
                     <td>{loan.status}</td>
                     <td><button className='cta-button' onClick={()=>{ShowResourceSpecs(loan.rid)}}>show</button></td>
+                    <td><button className='cta-button' onClick={()=>{setShowP2PMessagesModal(loan.rid)}}>messages</button></td>
                     <td><button className='cta-button' onClick={()=>{removeUserLoanRequest(loan.bid)}}>remove</button></td>
                     </tr>
                     ))
@@ -134,6 +137,7 @@ function SeeLoanRequests({tab, availableHeight}) {
                 </div>
             </div>
         )}
+        <P2PCommunicationModel/>
         </>
     );
 }
