@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useWebWorkers } from './WebWorkersProvider';
 import axios from 'axios';
+import { type } from '@testing-library/user-event/dist/type';
+import { base64ToArrayBuffer } from '../utils/utils';
 
 const CommunicationContext = createContext();
 
@@ -16,7 +18,7 @@ const CommunicationStateProvider = ({ children }) => {
     const httpADD = 'http://'; 
     const [loadingIterator, setLoadingIterator] = useState(0);
     const [isLan, setIsLan] = useState(false);
-    const { postWorkerTask, createWebWorker } = useWebWorkers();
+    const { executeWebWorker } = useWebWorkers();
 
     const getServerFullUrl = (endpoint, isHttp) => {
         return isHttp ? httpADD + serverUrl + endpoint : wsAdd + serverUrl + endpoint;
@@ -235,13 +237,36 @@ const CommunicationStateProvider = ({ children }) => {
     const ID2Connection = useRef({});
     const [, setID2Connection] = useState({}); 
 
+    const processPeerMessage = (event, connectionID) => {
+        const message = JSON.parse(event.data);
+        if (message.type === 'message') {
+            ID2Connection.current[connectionID].receivedMessages.push({ sender: 'remote', message: message.message });
+            setID2Connection(ID2Connection.current);
+        } else if (message.type === 'runCommand') {
+            executeWebWorker(
+                new URL('../utils/workers/wasmWorker.js', import.meta.url), 
+                { wasmBuffer: base64ToArrayBuffer(message.taskData.wasmBuffer), functionName: message.taskData.functionName, args: message.taskData.args }, 
+                (result)=> {
+                    sendP2PJSON(connectionID, { type: 'result', result: result.data});
+                },
+                (error) => {
+                    sendP2PJSON(connectionID, { type: 'error', error: error });
+                })
+        } else if (message.type === 'error') {
+            console.error('Error from peer:', message.error);
+        } else if (message.type === 'result') {
+            console.log('Result from peer:', message.result);
+            ID2Connection.current[connectionID].commandResults.push({result: message.result});
+        }
+    }
+
     const establishP2PConnection = async (connectionID) => {        
         const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
         const pc = new RTCPeerConnection(configuration);
 
         ID2Connection.current = {
             ...ID2Connection.current, 
-            [connectionID]: { pc: pc, channel: null, messages: [], iceCandidates: [] }
+            [connectionID]: { pc: pc, channel: null, receivedMessages: [], sentMessages: [], commandResults: [], iceCandidates: [] }
         };
         setID2Connection(ID2Connection.current);
 
@@ -258,9 +283,8 @@ const CommunicationStateProvider = ({ children }) => {
             setID2Connection(ID2Connection.current);
 
             receivedChannel.onmessage = (event) => {
-                ID2Connection.current[connectionID].messages.push({ sender: 'remote', message: event.data });
-                setID2Connection(ID2Connection.current);
-            };
+                processPeerMessage(event, connectionID);
+            }
 
             receivedChannel.onopen = () => {
                 console.log('Data channel opened!');
@@ -325,11 +349,9 @@ const CommunicationStateProvider = ({ children }) => {
             const dataChannel = await connection.createDataChannel('chat');
             ID2Connection.current[connectionID].channel = dataChannel;
             setID2Connection(ID2Connection.current);
-
             dataChannel.onmessage = (event) => {
-                ID2Connection.current[connectionID].messages.push({ sender: 'remote', message: event.data });
-                setID2Connection(ID2Connection.current);
-            };
+                processPeerMessage(event, connectionID);
+            }
 
             dataChannel.onopen = () => {
                 console.log('Data channel opened!');
@@ -353,10 +375,26 @@ const CommunicationStateProvider = ({ children }) => {
         return ID2Connection.current[connectionID] && ID2Connection.current[connectionID].channel && ID2Connection.current[connectionID].channel.readyState === 'open';
     };
 
-    const sendP2PMessage = (connectionID, message) => {
+    const sendP2PJSON = (connectionID, json) => {
         const channel = ID2Connection.current[connectionID].channel;
-        channel.send(message);
-        console.log('Sent message to peer:', message);
+        const info = JSON.stringify(json)
+        channel.send(info);
+        console.log('Sent JSON to peer:', json);
+    };
+
+    const sendP2PMessage = (connectionID, message) => {
+        ID2Connection.current[connectionID].sentMessages.push({ sender: 'local', message: message.message });
+        sendP2PJSON(connectionID ,message);
+    };
+
+    const sendP2PCommand = async (connectionID, command) => {
+        if(command.type === 'local'){
+            const response = await fetch(command.path);
+            const wasmBuffer = await response.arrayBuffer();
+            const uint8Array = new Uint8Array(wasmBuffer);
+            const base64String = btoa(String.fromCharCode(...uint8Array));
+            sendP2PJSON(connectionID, {type: 'runCommand', taskData: {wasmBuffer: base64String, functionName: command.functionName, args: command.args} });
+        }
     };
 
     const [currentP2PConnectionID, setCurrentP2PConnectionID] = useState(0);
@@ -370,21 +408,39 @@ const CommunicationStateProvider = ({ children }) => {
     };
 
     const P2PCommunicationModel = () => {
-        const [messages, setMessages] = useState([]);
         const [message, setMessage] = useState('');
+        const [wasmFileLocation, setWasmFileLocation] = useState("/res/computeTasks/hello.wasm");
+        const [sentMessages, setSentMessages] = useState([]);
+        const [receivedMessages, setReceivedMessages] = useState([]);
+        const [commandResults, setCommandResults] = useState([]);
 
-        const handleSend = () => {
-            sendP2PMessage(currentP2PConnectionID, message);
-            setMessages([...messages, { sender: 'local', message: message }]);
+        const handleSendMessage = () => {
+            sendP2PMessage(currentP2PConnectionID, { type: 'message', message: message });
             setMessage('');
+        };
+
+        const handleSendCommand = () => {
+            sendP2PCommand(currentP2PConnectionID, { type: 'local', path: wasmFileLocation, functionName: 'hello', args: ["yonatan"] });
         };
 
         const closeP2PConnectionModal = () => {
             setShowP2PMessagesModal(currentP2PConnectionID, false);
             setCurrentP2PConnectionID(0);
-            setMessages([]);
-            setMessage('');
         }
+
+        useEffect(() => {
+            // Update the messages every second, maybe by having a state for new messages
+            let interval
+            if (currentP2PConnectionID > 0) {
+                interval = setInterval(() => {
+                        setSentMessages(ID2Connection.current[currentP2PConnectionID].sentMessages);
+                        setReceivedMessages(ID2Connection.current[currentP2PConnectionID].receivedMessages);
+                        setCommandResults(ID2Connection.current[currentP2PConnectionID].commandResults);
+                    }
+                , 1000);
+            }
+            return () => clearInterval(interval);
+        }, [currentP2PConnectionID]);
 
         return (
             <>
@@ -392,21 +448,37 @@ const CommunicationStateProvider = ({ children }) => {
                 <div id="P2PMessagesModal" className="modal">
                     <div className="modal-content">
                         <span className="close-modal" onClick={()=>closeP2PConnectionModal()}>&times;</span>
-                        <h2 id="addLoanModalTitle">Chat</h2>
-                        <input type="text" value={message} onChange={(event) => setMessage(event.target.value)} />
-                        <button onClick={handleSend}>Send</button>
                         <nav>
-                            <ul>
-                                {messages.map((msg, index) => (
-                                    <li key={index}>{msg.sender}: {msg.message}</li>
-                                ))}
-                            </ul>
-                            <ul>
-                                {ID2Connection.current[currentP2PConnectionID].messages.map((msg, index) => (
-                                    <li key={index}>{msg.sender}: {msg.message}</li>
-                                ))}
-                            </ul>
-                        </nav>
+                            <div>
+                                <h2>Chat</h2>
+                                <label htmlFor="wasmFile">Enter message:</label>
+                                <input type="text" value={message} onChange={(event) => setMessage(event.target.value)} />
+                                <button onClick={handleSendMessage}>Send</button>
+                                <nav>
+                                    <ul>
+                                        {sentMessages.map((msg, index) => (
+                                            <li key={index}>{msg.sender}: {msg.message}</li>
+                                        ))}
+                                    </ul>
+                                    <ul>
+                                        {receivedMessages.map((msg, index) => (
+                                            <li key={index}>{msg.sender}: {msg.message}</li>
+                                        ))}
+                                    </ul>
+                                </nav>
+                            </div>    
+                            <div>
+                                <h2>Command</h2>
+                                <label htmlFor="wasmFile">WASM File Location:</label>
+                                <input type="text" id="wasmFile" defaultValue= {wasmFileLocation} onChange={(event) => setWasmFileLocation(event.target.value)}/>
+                                <button onClick={handleSendCommand}>Run</button>
+                                <ul>
+                                    {commandResults.map((msg, index) => (
+                                        <li key={index}>"Result": {msg.result}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </nav> 
                     </div>
                 </div>
             }

@@ -210,7 +210,7 @@ function AddResource({tab, availableHeight}) {
                     <td>{resource.bandwidth}</td>
                     <td>{resource.costPerHour}</td>
                     <td><button className='cta-button' style={{ backgroundColor: resource.available ? 'green' : 'red' }}  onClick={()=>{changeAvailability(resource.rid,resource.available)}}>available</button></td>
-                    <td><button className='cta-button' onClick={()=>{setShowP2PMessagesModal(resource.rid)}}>messages</button></td>
+                    <td><button className='cta-button' style={{ backgroundColor: resource.computing ? 'green' : 'red' }} onClick={()=>{setShowP2PMessagesModal(resource.rid)}}>messages</button></td>
                     <td><button className='cta-button' onClick={()=>{removeUserResource(resource.rid)}}>Remove</button></td>
                     </tr>
                     ))

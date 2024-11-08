@@ -1,6 +1,6 @@
 onmessage = (event) => {
-    if (event.data.type === 'runFunction') {
-        const { fn, data } = event.data;
+    const { type, fn, data } = event.data
+    if (type === 'runFunction') {
         const result = fn(data);
         postMessage(result);
     }

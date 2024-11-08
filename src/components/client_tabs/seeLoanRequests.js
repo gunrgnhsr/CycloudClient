@@ -32,9 +32,12 @@ function SeeLoanRequests({tab, availableHeight}) {
     }
 
     useEffect(() => {
+        let intervalId;
         if(tab === 3){
-            getLoanRequests();
+            getLoanRequests(); // Call immediately
+            intervalId = setInterval(getLoanRequests, 10000);
         }
+        return () => clearInterval(intervalId);
     }, [tab]);
 
     const removeUserLoanRequest = async (bid) => {
@@ -104,7 +107,7 @@ function SeeLoanRequests({tab, availableHeight}) {
                     <td>{loan.amount}</td>
                     <td>{loan.status}</td>
                     <td><button className='cta-button' onClick={()=>{ShowResourceSpecs(loan.rid)}}>show</button></td>
-                    <td><button className='cta-button' onClick={()=>{setShowP2PMessagesModal(loan.rid)}}>messages</button></td>
+                    <td><button className='cta-button'  style={{ backgroundColor: loan.computing ? 'green' : 'red' }} onClick={()=>{setShowP2PMessagesModal(loan.rid)}}>messages</button></td>
                     <td><button className='cta-button' onClick={()=>{removeUserLoanRequest(loan.bid)}}>remove</button></td>
                     </tr>
                     ))

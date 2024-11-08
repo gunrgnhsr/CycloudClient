@@ -16,3 +16,18 @@ export const getTotalHeight = (element) => {
 
     return totalHeight;
 };
+
+/**
+ * Converts a base64 string to an ArrayBuffer.
+ * @param {string} base64 - The base64 string to convert.
+ * @returns {ArrayBuffer} - The ArrayBuffer representation of the base64 string.
+ */
+export const base64ToArrayBuffer = (base64) => {
+    const binaryString = atob(base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+}

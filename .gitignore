@@ -3,3 +3,4 @@ node_modules/
 build/
 .vscode/
 start-react-server.sh
+wasmComputeTaskFiles/
