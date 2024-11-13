@@ -245,7 +245,7 @@ const CommunicationStateProvider = ({ children }) => {
         } else if (message.type === 'runCommand') {
             executeWebWorker(
                 new URL('../utils/workers/wasmWorker.js', import.meta.url), 
-                { wasmBuffer: base64ToArrayBuffer(message.taskData.wasmBuffer), functionName: message.taskData.functionName, args: message.taskData.args }, 
+                { wasmBuffer: base64ToArrayBuffer(message.taskData.wasmBuffer), functionName: message.taskData.functionName, args: message.taskData.args, numberOfOutputs: 1 }, 
                 (result)=> {
                     sendP2PJSON(connectionID, { type: 'result', result: result.data});
                 },
@@ -432,6 +432,9 @@ const CommunicationStateProvider = ({ children }) => {
             // Update the messages every second, maybe by having a state for new messages
             let interval
             if (currentP2PConnectionID > 0) {
+                setSentMessages(ID2Connection.current[currentP2PConnectionID].sentMessages);
+                setReceivedMessages(ID2Connection.current[currentP2PConnectionID].receivedMessages);
+                setCommandResults(ID2Connection.current[currentP2PConnectionID].commandResults);
                 interval = setInterval(() => {
                         setSentMessages(ID2Connection.current[currentP2PConnectionID].sentMessages);
                         setReceivedMessages(ID2Connection.current[currentP2PConnectionID].receivedMessages);

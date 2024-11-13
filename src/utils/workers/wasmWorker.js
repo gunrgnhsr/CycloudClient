@@ -1,5 +1,5 @@
 onmessage = async (event) => {
-    const { wasmBuffer, functionName, args } = event.data.data;
+    const { wasmBuffer, functionName, args, numberOfOutputs } = event.data.data;
 
     // Instantiate the Wasm module from the buffer
     const wasm = await WebAssembly.instantiate(wasmBuffer);
@@ -23,13 +23,18 @@ onmessage = async (event) => {
     
     // Read the result from memory using TextDecoder
     const decoder = new TextDecoder();
-    const outputStart = wasm.instance.exports.output_start;
-    let outputEnd = outputStart;
-    while (memory[outputEnd] !== 0) {
-        outputEnd++;
+    let outputStart = wasm.instance.exports.output_start;
+    const results = [];
+    for (let i = 0; i < numberOfOutputs; i++) {
+        let outputEnd = outputStart;
+        while (memory[outputEnd] !== 0) {
+            outputEnd++;
+        }
+        const result = decoder.decode(memory.subarray(outputStart, outputEnd));
+        results.push(result);
+        outputStart = outputEnd + 1; // Move to the next output
     }
-    const result = decoder.decode(memory.subarray(outputStart, outputEnd));
 
     // Post the result back to the main thread
-    postMessage(result);
+    postMessage(results);
 };
