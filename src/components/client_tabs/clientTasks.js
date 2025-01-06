@@ -6,7 +6,7 @@ import { getTotalHeight } from '../../utils/utils';
 import TestTaskModal from './testTask';
 
     
-function AddTask({tab, availableHeight}) {    
+function AddTask({availableHeight, remoteConnectionID}) {    
     const [doLocaly, setDoLocaly] = useState(false);
     const [tid, setTid] = useState(0);
     const [tasks, setTasks] = useState([]);
@@ -21,7 +21,6 @@ function AddTask({tab, availableHeight}) {
     const [showAddTaskModal, setShowAddTaskModal] = useState(false);
     const [showTestTaskModal, setShowTestTaskModal] = useState(false);
     const { postAuthPost, postAuthPut, postAuthDel, postAuthGet , postAuthFetch , postAuthWebSocket } = useLoginState();
-    const { establishSSEStream, establishP2PConnection , sendIceCandidate, closeP2PConnection, handleIceCandidate, createOffer, handleAnswer, sendWebSocketMessage, closeWebSocket, setShowP2PMessagesModal, P2PCommunicationModel } = useCommunication();
 
     const navRef = useRef(null);
     const [tableHeight, setTableHeight] = useState(availableHeight);
@@ -42,10 +41,8 @@ function AddTask({tab, availableHeight}) {
     }
 
     useEffect(() => {
-        if(tab === 4){
-            getTasks();
-        }
-    }, [tab]);
+        getTasks();
+    }, []);
 
     const handleTaskInputChange = (event) => {
         const { name, value } = event.target;
@@ -240,7 +237,7 @@ function AddTask({tab, availableHeight}) {
                 </div>
             </div>
         )}
-        {showTestTaskModal && <TestTaskModal currentTask={currentTask} setShowTestTaskModal={setShowTestTaskModal} />}
+        {showTestTaskModal && <TestTaskModal currentTask={currentTask} setShowTestTaskModal={setShowTestTaskModal} remoteConnectionID={remoteConnectionID}/>}
         </>
     );
 }

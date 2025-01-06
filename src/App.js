@@ -6,6 +6,8 @@ import Client from './components/Client';
 import Footer from './components/Footer';
 import {useLoginState} from './providers/LoginStateProvider';
 import { getTotalHeight } from './utils/utils';
+import { P2PCommunicationStateProvider } from './providers/P2PCommunicationProvider';
+
 
 // This is the main App component that will be rendered
 function App() {
@@ -46,8 +48,12 @@ function App() {
             <Header ref={headerRef}/>
 
             {/* Main content area */}
-            {!isLoggedIn ? <LandingPage/> : <Client mainHeight={mainHeight}/>}
-            
+            {!isLoggedIn ? 
+                <LandingPage/> : 
+                <P2PCommunicationStateProvider>
+                    <Client mainHeight={mainHeight}/>
+                </P2PCommunicationStateProvider>
+                }
             {/* Footer component */}
             <Footer ref={footerRef}/>
         </div>

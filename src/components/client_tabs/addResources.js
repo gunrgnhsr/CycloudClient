@@ -1,10 +1,12 @@
 // src/components/Client.js
 import React, { useEffect, useState, useRef } from 'react';
-import {useLoginState} from '../../providers/LoginStateProvider';
+import { useLoginState } from '../../providers/LoginStateProvider';
 import { useCommunication } from '../../providers/CommunicationStateProvider';
+import { useP2PCommunication } from '../../providers/P2PCommunicationProvider';
+import P2PCommunicationModel from './P2PCommunicationModal';
 import { getTotalHeight } from '../../utils/utils';
     
-function AddResource({tab, availableHeight}) {    
+function AddResource({availableHeight}) {    
     const [resources, setResources] = useState([]);
 
     // Resource request state
@@ -16,10 +18,9 @@ function AddResource({tab, availableHeight}) {
     const [costPerHour, setCostPerHour] = useState(2);
 
     const [showAddResourceModal, setShowAddResourceModal] = useState(false);
-    const { postAuthPost, postAuthPut, postAuthDel, postAuthGet , postAuthFetch , postAuthWebSocket } = useLoginState();
-    const { establishSSEStream, establishP2PConnection , sendIceCandidate, closeP2PConnection, handleIceCandidate, createOffer, handleAnswer, sendWebSocketMessage, closeWebSocket, setShowP2PMessagesModal, P2PCommunicationModel } = useCommunication();
-
-    const [ridToWebWorker, setRidToWebWorker] = useState({});
+    const { postAuthPost, postAuthDel, postAuthGet , postAuthFetch } = useLoginState();
+    const { establishSSEStream, closeWebSocket } = useCommunication();
+    const { waitForAConnectionOffer, closeP2PConnection } = useP2PCommunication();
 
     const navRef = useRef(null);
     const [tableHeight, setTableHeight] = useState(availableHeight);
@@ -40,10 +41,8 @@ function AddResource({tab, availableHeight}) {
     }
 
     useEffect(() => {
-        if(tab === 1){
-            getResources();
-        }
-    }, [tab]);
+        getResources();
+    }, []);
 
     const handleResourceInputChange = (event) => {
         const { name, value } = event.target;
@@ -115,42 +114,13 @@ function AddResource({tab, availableHeight}) {
                     await establishSSEStream(
                         response,
                         async (message) => {
+                            getResources();
                             if(message.data === 'no bids for resource'){
-                                getResources();
                                 console.log('No bids for resource: ', rid);
                             }else if(message.data === 'starting connection'){
-                                await postAuthWebSocket(
-                                    `make-connection-offer/${rid}`, 
-                                    async (rawMessage) => {
-                                        const message = JSON.parse(rawMessage.data);
-                                        if (message.type === 'start') {
-                                            console.log('starting connection with the loaner');
-                                            await establishP2PConnection(rid);                                
-                                            const offer = await createOffer(rid);
-                                            if (offer) {
-                                                await sendWebSocketMessage(rid, offer);
-                                            } else {
-                                                console.error('error occurred while creating offer');
-                                            }
-                                        } else if (message.type === 'answer') {
-                                            await handleAnswer(message.answer, rid);
-                                            await sendIceCandidate(rid, sendWebSocketMessage);   
-                                        } else if (message.type === 'iceCandidates') {
-                                            await handleIceCandidate(message.iceCandidates,rid);
-                                            await sendIceCandidate(rid, sendWebSocketMessage);
-                                        } else if (message.error) {
-                                            console.error('error occurred: ', message.error);
-                                        } else {
-                                            console.log('unknown message: ', message);
-                                        }
-                                    },
-                                    rid,
-                                    (error) => {
-                                        console.error('Error during WebSocket:', error);
-                                    }
-                                );
+                                console.log('Awaitting connection from the loaner');
+                                waitForAConnectionOffer(rid);
                             } else if(message.data === 'connection ended'){
-                                getResources();
                                 await closeP2PConnection(rid);
                                 await closeWebSocket(rid);
                                 console.log('ending connection with the loaner');
@@ -167,6 +137,20 @@ function AddResource({tab, availableHeight}) {
             }
         );  
     }
+
+    const [currentConnectionID, setCurrentConnectionID] = useState(null);
+    const [ showP2PModal, setShowP2PModal ] = useState(false);
+
+    const openP2PCommunicationModal = async (rid) => {
+        setShowP2PModal(true);
+        setCurrentConnectionID(rid);
+    }
+
+    const closeP2PCommunicationModal = async () => {
+        setShowP2PModal(false);
+        setCurrentConnectionID(null);
+    }
+
 
     useEffect(() => {
         const calculateTableHeight = () => {
@@ -210,7 +194,7 @@ function AddResource({tab, availableHeight}) {
                     <td>{resource.bandwidth}</td>
                     <td>{resource.costPerHour}</td>
                     <td><button className='cta-button' style={{ backgroundColor: resource.available ? 'green' : 'red' }}  onClick={()=>{changeAvailability(resource.rid,resource.available)}}>available</button></td>
-                    <td><button className='cta-button' style={{ backgroundColor: resource.computing ? 'green' : 'red' }} onClick={()=>{setShowP2PMessagesModal(resource.rid)}}>messages</button></td>
+                    <td><button className='cta-button' style={{ backgroundColor: resource.computing ? 'green' : 'red' }} onClick={()=>{openP2PCommunicationModal(resource.rid)}}>messages</button></td>
                     <td><button className='cta-button' onClick={()=>{removeUserResource(resource.rid)}}>Remove</button></td>
                     </tr>
                     ))
@@ -252,7 +236,7 @@ function AddResource({tab, availableHeight}) {
                 </div>
             </div>
         )}
-        <P2PCommunicationModel/>
+        { showP2PModal && <P2PCommunicationModel currentP2PConnectionID={currentConnectionID} closeP2PConnectionModal={closeP2PCommunicationModal}/>}
         </>
     );
 }

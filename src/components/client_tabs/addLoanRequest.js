@@ -2,9 +2,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {useLoginState} from '../../providers/LoginStateProvider';
 import { useCommunication } from '../../providers/CommunicationStateProvider';
+import { useP2PCommunication } from '../../providers/P2PCommunicationProvider'; 
 import { getTotalHeight } from '../../utils/utils';
 
-function AddLoanRequest({tab, availableHeight}) {
+function AddLoanRequest({availableHeight}) {
     
     // Loan request state
     const [loanRequestRid, setLoanRequestRid] = useState(0);
@@ -17,14 +18,13 @@ function AddLoanRequest({tab, availableHeight}) {
     const [lastAvailableResource, setLastAvailableResource] = useState("0");
     const [firstAvailableResource, setFirstAvailableResource] = useState("0");
 
-    const [showAddLoanModal, setShowAddLoanModal] = useState(false);
-    const { postAuthPost,  postAuthGet, postAuthFetch, postAuthWebSocket} = useLoginState();
-    const { establishSSEStream, establishP2PConnection, sendIceCandidate , closeP2PConnection, handleIceCandidate, handleOffer, sendWebSocketMessage, closeWebSocket } = useCommunication();
+    const [ showAddLoanModal, setShowAddLoanModal ] = useState(false);
+    const { postAuthGet, postAuthFetch} = useLoginState();
+    const { establishSSEStream , closeWebSocket } = useCommunication();
+    const { closeP2PConnection } = useP2PCommunication();
 
     const h2Ref = useRef(null);
     const [tableHeight, setTableHeight] = useState(availableHeight);
-
-    const [bidToWebWorker, setBidToWebWorker] = useState({});
 
     const getAvailableResources = async () => {
         await postAuthGet(`available-resources/${0}/${"next"}`, {}) ///${lastAvailableResource}/${"next"} change to this
@@ -46,10 +46,8 @@ function AddLoanRequest({tab, availableHeight}) {
     }
 
     useEffect(() => {
-        if(tab === 2){
-            getAvailableResources();
-        }
-    }, [tab]);
+        getAvailableResources();
+    }, []);
 
     const handleLoanInputChange = (event) => {
         const { name, value } = event.target;
@@ -82,36 +80,11 @@ function AddLoanRequest({tab, availableHeight}) {
                     await establishSSEStream(
                         response,
                         async (message) => {
+                            getAvailableResources();
                             if(message.data === 'bid is rejected'){
                                 console.log('bid rejected because of: ', message.reason);
                             }else if(message.data === 'starting connection'){
-                                await postAuthWebSocket(
-                                    `accept-connection-offer/${rid}`, 
-                                    async (rawMessage) => {
-                                        const message = JSON.parse(rawMessage.data);
-                                        if (message.type === 'offer') {
-                                            console.log('starting connection with the loaner');
-                                            await establishP2PConnection(rid);            
-                                            const answer = await handleOffer(message.offer,rid);
-                                            if(answer){
-                                                await sendWebSocketMessage(rid,answer);
-                                            } else {
-                                                console.error('error occurred while handling offer');
-                                            }
-                                        } else if (message.type === 'iceCandidates') {
-                                            await handleIceCandidate(message.iceCandidates,rid);
-                                            await sendIceCandidate(rid, sendWebSocketMessage);
-                                        } else if (message.error) {
-                                            console.error('error occurred: ', message.error);
-                                        } else {
-                                            console.log('unknown message: ', message);
-                                        }
-                                    },
-                                    rid,
-                                    (error) => {
-                                        console.error('Error during WebSocket:', error);
-                                    }
-                                );
+                                console.log('can start connection with the loaner');
                             } else if(message.data === 'connection ended'){
                                 await closeP2PConnection(rid);
                                 await closeWebSocket(rid);

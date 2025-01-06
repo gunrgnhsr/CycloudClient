@@ -11,8 +11,6 @@ const WebWorkersProvider = ({ children }) => {
     const [numberOfWorkers, setNumberOfWorkers] = useState(0);
     const maxNumberOfWorkers = 4;
 
-    
-    
     const executeWebWorker = async (workerURL, taskData, onMessage, onError) => {
         if (numberOfWorkers >= maxNumberOfWorkers) {
             console.error('Maximum number of workers reached');

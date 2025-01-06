@@ -40,10 +40,10 @@ function Client({mainHeight}) {
                     </div>
                     <PersonalInfoModel/>
                 </nav>
-                {tab === 1 && <AddResource tab={tab} availableHeight={availableHeight}/>} 
-                {tab === 2 && <AddLoanRequest tab={tab} availableHeight={availableHeight}/>}
-                {tab === 3 && <SeeLoanRequests tab={tab} availableHeight={availableHeight}/>} 
-                {tab === 4 && <AddTask tab={tab} availableHeight={availableHeight}/>} 
+                {tab === 1 && <AddResource availableHeight={availableHeight}/>} 
+                {tab === 2 && <AddLoanRequest availableHeight={availableHeight}/>}
+                {tab === 3 && <SeeLoanRequests availableHeight={availableHeight}/>} 
+                {tab === 4 && <AddTask availableHeight={availableHeight} remoteConnectionID={-1}/>} 
             </main>
         );
 }

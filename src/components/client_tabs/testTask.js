@@ -1,28 +1,42 @@
 import { useState } from 'react';
 import { base64ToArrayBuffer } from '../../utils/utils';
 import { useWebWorkers } from '../../providers/WebWorkersProvider';
+import { useP2PCommunication } from '../../providers/P2PCommunicationProvider';
 
-const TestTaskModal = ({currentTask, setShowTestTaskModal}) => {
+function TestTaskModal({currentTask, setShowTestTaskModal, remoteConnectionID}){
     const [args, setArgs] = useState(Array(currentTask.numberOfArguments).fill(''));
     const [results, setResults] = useState([]);
     const [showResults, setShowResults] = useState(false);
     const { executeWebWorker } = useWebWorkers();    
+    const { sendP2PCommand, getCommandResults } = useP2PCommunication();
 
     
     const handleTaskResult = (resultsArray) => {
-        setResults(resultsArray);
+        setResults([...resultsArray]);
         setShowResults(true);
         console.log('Task Test Results:', resultsArray);
     }
 
     const taskTest = () => {
         const { code, functionName, numberOfOutputs } = currentTask;
-        executeWebWorker(
-            new URL('../../utils/workers/wasmWorker.js', import.meta.url), 
-            { wasmBuffer: base64ToArrayBuffer(code), functionName: functionName, args: args, numberOfOutputs: numberOfOutputs }, 
-            (message)=> { handleTaskResult([...message.data]) },
-            (error) => { alert(error + ' Please check the console for more information.') }
-        )
+        let taskData = {
+            wasmBuffer: code, 
+            functionName: functionName, 
+            args: args, 
+            numberOfOutputs: numberOfOutputs 
+        }
+        if(remoteConnectionID === -1){
+            taskData.wasmBuffer = base64ToArrayBuffer(code)
+            executeWebWorker(
+                new URL('../../utils/workers/wasmWorker.js', import.meta.url), 
+                taskData, 
+                (message)=> { handleTaskResult(message.data) },
+                (error) => { alert(error + ' Please check the console for more information.') }
+            )
+        } else {
+            sendP2PCommand(remoteConnectionID, taskData)
+            getCommandResults(remoteConnectionID, handleTaskResult)
+        }
     }
 
     const closeTestTaskModal = () => {

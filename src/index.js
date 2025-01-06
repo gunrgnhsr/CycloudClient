@@ -13,7 +13,7 @@ root.render(
         <WebWorkersProvider>
             <CommunicationStateProvider>
                 <LoginStateProvider>
-                    <App />
+                        <App />
                 </LoginStateProvider>
             </CommunicationStateProvider>
         </WebWorkersProvider>

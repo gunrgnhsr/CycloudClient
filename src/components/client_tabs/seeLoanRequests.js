@@ -1,18 +1,17 @@
 // src/components/Client.js
 import React, { useEffect, useState, useRef } from 'react';
 import {useLoginState} from '../../providers/LoginStateProvider';
-import { useCommunication } from '../../providers/CommunicationStateProvider';
+import P2PCommunicationModel from './P2PCommunicationModal';
 import { getTotalHeight } from '../../utils/utils';
 
-function SeeLoanRequests({tab, availableHeight}) {
+function SeeLoanRequests({availableHeight}) {
 
     const [loanRequestResourceSpec, setLoanRequestResourceSpec] = useState({});
     const [loanRequests, setLoanRequests] = useState([]);
 
     const [showResourceModel, setShowResourceModel] = useState(false);
     const { postAuthDel, postAuthGet } = useLoginState();
-    const { setShowP2PMessagesModal, P2PCommunicationModel } = useCommunication();
-
+    
     const h2Ref = useRef(null);
     const [tableHeight, setTableHeight] = useState(availableHeight);
 
@@ -33,12 +32,10 @@ function SeeLoanRequests({tab, availableHeight}) {
 
     useEffect(() => {
         let intervalId;
-        if(tab === 3){
-            getLoanRequests(); // Call immediately
-            intervalId = setInterval(getLoanRequests, 10000);
-        }
+        getLoanRequests(); // Call immediately
+        intervalId = setInterval(getLoanRequests, 10000);
         return () => clearInterval(intervalId);
-    }, [tab]);
+    }, []);
 
     const removeUserLoanRequest = async (bid) => {
         await postAuthDel(`delete-loan-request/${bid}`, {})
@@ -75,6 +72,19 @@ function SeeLoanRequests({tab, availableHeight}) {
         setShowResourceModel(false);
     }
 
+    const [currentConnectionID, setCurrentConnectionID] = useState(null);
+    const [ showP2PModal, setShowP2PModal ] = useState(false);
+
+    const openP2PCommunicationModal = async (rid) => {
+        setShowP2PModal(true);
+        setCurrentConnectionID(rid);
+    }
+
+    const closeP2PCommunicationModal = async () => {
+        setShowP2PModal(false);
+        setCurrentConnectionID(null);
+    }
+
     useEffect(() => {
         const calculateTableHeight = () => {
             if(h2Ref.current){
@@ -107,7 +117,7 @@ function SeeLoanRequests({tab, availableHeight}) {
                     <td>{loan.amount}</td>
                     <td>{loan.status}</td>
                     <td><button className='cta-button' onClick={()=>{ShowResourceSpecs(loan.rid)}}>show</button></td>
-                    <td><button className='cta-button'  style={{ backgroundColor: loan.computing ? 'green' : 'red' }} onClick={()=>{setShowP2PMessagesModal(loan.rid)}}>messages</button></td>
+                    <td><button className='cta-button'  style={{ backgroundColor: loan.computing ? 'green' : 'red' }} onClick={()=>{openP2PCommunicationModal(loan.rid)}}>messages</button></td>
                     <td><button className='cta-button' onClick={()=>{removeUserLoanRequest(loan.bid)}}>remove</button></td>
                     </tr>
                     ))
@@ -140,7 +150,7 @@ function SeeLoanRequests({tab, availableHeight}) {
                 </div>
             </div>
         )}
-        <P2PCommunicationModel/>
+        { showP2PModal && <P2PCommunicationModel currentP2PConnectionID={currentConnectionID} closeP2PConnectionModal={closeP2PCommunicationModal} isLoaner={true}/>}
         </>
     );
 }
